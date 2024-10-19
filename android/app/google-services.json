@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "810082152615",
+    "firebase_url": "https://volufriend-default-rtdb.firebaseio.com",
+    "project_id": "volufriend",
+    "storage_bucket": "volufriend.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810082152615:android:37fe1f00e0ed4dc42eeb82",
+        "android_client_info": {
+          "package_name": "com.example.using_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBb7Zb5NDZjLISAPeYe1SlqR8-2xhcWNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810082152615:android:55058fac2be473762eeb82",
+        "android_client_info": {
+          "package_name": "com.mohitsapplication.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBb7Zb5NDZjLISAPeYe1SlqR8-2xhcWNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810082152615:android:236f2ac4e770d58c2eeb82",
+        "android_client_info": {
+          "package_name": "com.volufriend.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBb7Zb5NDZjLISAPeYe1SlqR8-2xhcWNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

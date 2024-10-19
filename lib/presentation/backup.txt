@@ -1,0 +1,165 @@
+Widget _buildEventDetails(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 16.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.h),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 12.h,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Event Title
+          Row(
+            children: [
+              Icon(Icons.event, color: Colors.green, size: 24.h),
+              SizedBox(width: 8.h),
+              Expanded(
+                child: Text(
+                  "msg_volunteering_for".tr,
+                  style: CustomTextStyles.headlineSmallRobotoGreenA100.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20.h,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+
+          // Organizer Name
+          Row(
+            children: [
+              Icon(Icons.group, color: Colors.green, size: 24.h),
+              SizedBox(width: 8.h),
+              Text(
+                "msg_bothell_high_school2".tr,
+                style: CustomTextStyles.titleMediumGreenA100.copyWith(
+                  fontSize: 18.h,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+
+          // Event Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8.h),
+            child: CustomImageView(
+              imagePath: ImageConstant.imgEventpicture1,
+              height: 158.h,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              margin: EdgeInsets.only(left: 6.h),
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Event Description
+          Text(
+            "msg_this_event_is_conducted".tr,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: CustomTextStyles.titleSmallGreenA100.copyWith(
+              fontSize: 16.h,
+              color: Colors.black87,
+              height: 1.5,
+            ),
+          ),
+          SizedBox(height: 24.h),
+
+          // Event Date, Time, and Location
+          Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.green, size: 20.h),
+              SizedBox(width: 8.h),
+              Text(
+                "Event Date: 25th Sep, 2024",
+                style: CustomTextStyles.bodyText.copyWith(
+                  fontSize: 16.h,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(width: 16.h),
+              Icon(Icons.access_time, color: Colors.green, size: 20.h),
+              SizedBox(width: 8.h),
+              Text(
+                "10:00 AM - 2:00 PM",
+                style: CustomTextStyles.bodyText.copyWith(
+                  fontSize: 16.h,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Icon(Icons.location_on, color: Colors.green, size: 20.h),
+              SizedBox(width: 8.h),
+              Text(
+                "Location: Bothell High School",
+                style: CustomTextStyles.bodyText.copyWith(
+                  fontSize: 16.h,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24.h),
+
+          // Coordinator Contact Information Section
+          Divider(),
+          Text(
+            "Coordinator Contact Information",
+            style: CustomTextStyles.titleMedium.copyWith(
+              fontSize: 18.h,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          _buildContactInfo(context), // Contact Info widget
+        ],
+      ),
+    );
+  }
+
+// Contact Info Section
+  Widget _buildContactInfo(BuildContext context) {
+    return Container(
+      width: double.maxFinite,
+      margin: EdgeInsets.symmetric(horizontal: 10.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Coordinator: Peggy Brown",
+                style: CustomTextStyles.titleSmallGray90003,
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                "Phone: +1 409-456-7889",
+                style: CustomTextStyles.titleSmallGray90003,
+              ),
+            ],
+          ),
+          Text(
+            "Email: peg23_smith@nsd.org",
+            style: CustomTextStyles.titleSmallPrimary_1,
+          )
+        ],
+      ),
+    );
+  }
