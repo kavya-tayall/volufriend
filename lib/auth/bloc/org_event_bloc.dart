@@ -44,6 +44,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         showalluserevents: false,
         eventDetails: false,
         manageEvents: true,
+        hasNavigated: false,
         updateEvent: false));
     print('manageEvents updated to: ${state.manageEvents}');
   }
@@ -69,6 +70,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         showallorgevents: false,
         showalluserevents: false,
         eventDetails: true,
+        hasNavigated: false,
         manageEvents: false,
         updateEvent: false));
     print('eventdetails updated to: ${state.eventId}');
@@ -94,6 +96,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
       showallorgevents: false,
       eventDetails: false,
       manageEvents: false,
+      hasNavigated: false,
       updateEvent: false,
     ));
 
@@ -117,6 +120,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         orgschedule: false,
         eventsignup: false,
         showallorgevents: true,
+        hasNavigated: false,
         showalluserevents: false,
         eventDetails: false,
         manageEvents: false,
@@ -139,6 +143,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         attendeelist: false,
         orgschedule: false,
         eventsignup: true,
+        hasNavigated: false,
         showallorgevents: false,
         showalluserevents: false,
         eventDetails: false,
@@ -161,6 +166,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         approvehours: false,
         attendeelist: false,
         orgschedule: true,
+        hasNavigated: false,
         eventsignup: false,
         showallorgevents: false,
         showalluserevents: false,
@@ -185,6 +191,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         attendanceReport: false,
         approvehours: false,
         attendeelist: true,
+        hasNavigated: false,
         orgschedule: false,
         eventsignup: false,
         showallorgevents: false,
@@ -211,6 +218,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         volunteerProfile: false,
         attendanceReport: false,
         approvehours: true,
+        hasNavigated: false,
         attendeelist: false,
         orgschedule: false,
         eventsignup: false,
@@ -237,6 +245,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         attendeelist: false,
         orgschedule: false,
         attendanceReport: true,
+        hasNavigated: false,
         eventsignup: false,
         showallorgevents: false,
         showalluserevents: false,
@@ -257,6 +266,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
         findNewOpportunities: false,
         scheduledEvents: false,
         volunteerProfile: true,
+        hasNavigated: false,
         attendanceReport: false,
         approvehours: false,
         attendeelist: false,
@@ -272,25 +282,9 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
 
   // Handler for resetEvent event
   void _onResetEvent(resetEvent event, Emitter<orgVoluEventState> emit) {
-    print('resetEvent event received');
-    emit(state.copyWith(
-        eventId: '',
-        userId: '',
-        isLoading: false,
-        findNewOpportunities: false,
-        scheduledEvents: false,
-        volunteerProfile: false,
-        attendanceReport: false,
-        approvehours: false,
-        attendeelist: false,
-        orgschedule: false,
-        eventsignup: false,
-        showallorgevents: false,
-        showalluserevents: false,
-        eventDetails: false,
-        manageEvents: false,
-        updateEvent: false));
-    print('State reset');
+    print('ResetEvent received');
+    emit(orgVoluEventState.initial); // Emit the initial state directly
+    print('State reset to initial');
   }
 
   // Handler for findNewOpportunities event
@@ -299,6 +293,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
     print('findNewOpportunities event received');
     emit(state.copyWith(
         findNewOpportunities: true,
+        hasNavigated: false,
         scheduledEvents: false,
         isLoading: false,
         eventId: '',
@@ -323,6 +318,7 @@ class orgVoluEventBloc extends Bloc<orgVoluEventEvent, orgVoluEventState> {
     print('scheduledEvents event received');
     emit(state.copyWith(
         scheduledEvents: true,
+        hasNavigated: false,
         findNewOpportunities: false,
         isLoading: false,
         eventId: '',

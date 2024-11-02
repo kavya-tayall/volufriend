@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:volufriend/presentation/vf_homescreen_container_screen/bloc/vf_homescreen_container_bloc.dart';
+import 'package:volufriend/widgets/vf_app_bar_with_title_back_button.dart';
 import '../../core/app_export.dart';
 import '../../widgets/custom_elevated_button.dart';
 import 'bloc/vf_eventsignupscreen_bloc.dart';
@@ -9,46 +10,6 @@ import '../../crud_repository/volufriend_crud_repo.dart';
 import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import '../../auth/bloc/login_user_bloc.dart';
 import 'package:intl/intl.dart';
-
-/*
-// Define the Shift class if not already defined
-class Shift {
-  final String eventName;
-  final int minAge;
-  final int registeredParticipants;
-  final int totalParticipants;
-  final String startTime;
-  final String endTime;
-
-  Shift({
-    required this.eventName,
-    required this.minAge,
-    required this.registeredParticipants,
-    required this.totalParticipants,
-    required this.startTime,
-    required this.endTime,
-  });
-}
-
-// Example shifts
-final List<Shift> shifts = [
-  Shift(
-    eventName: 'Community Cleanup',
-    minAge: 15,
-    registeredParticipants: 5,
-    totalParticipants: 10,
-    startTime: '9:00 AM',
-    endTime: '11:00 AM',
-  ),
-  Shift(
-    eventName: 'Coding Workshop',
-    minAge: 13,
-    registeredParticipants: 12,
-    totalParticipants: 15,
-    startTime: '1:00 PM',
-    endTime: '3:00 PM',
-  ),
-];*/
 
 class VfEventsignupscreenScreen extends StatelessWidget {
   const VfEventsignupscreenScreen({Key? key}) : super(key: key);
@@ -65,46 +26,20 @@ class VfEventsignupscreenScreen extends StatelessWidget {
       ),
       child: BlocConsumer<orgVoluEventBloc, orgVoluEventState>(
         listener: (context, orgEventState) {
-          // Listener for state changes
-          print('Event details screen state: $orgEventState');
-
           if (orgEventState.isLoading) {
             print('Create mode started');
-            // Handle any actions for create mode, like showing a loader
           }
         },
         builder: (context, orgEventState) {
-          String formContext = '';
-
-          // Access state properties
-          final eventId = orgEventState.eventId ?? ''; // Non-null eventId
-          final isCreateMode = orgEventState.isLoading;
-
-          if (isCreateMode) {
-            print('Create mode started');
-            formContext = 'create';
-          } else {
-            print('Edit mode started');
-            formContext = 'edit';
-          }
-
-          // Logging for debugging
-          print('eventId: $eventId');
-          print('formContext: $formContext');
-
+          final eventId = orgEventState.eventId ?? '';
           final userBloc = BlocProvider.of<UserBloc>(context);
           final userState = userBloc.state;
 
-          // Check user login state and fire the event
           if (userState is LoginUserWithHomeOrg) {
-            print('User is logged in with home org');
-            // Access user properties
             final userId = userState.userId;
             final userHomeOrg = userState.user.userHomeOrg;
             final String? orgId = userHomeOrg?.orgid;
-            //final String? usrorgid = userHomeOrg?.useridinorg;
 
-            // Dispatch initial event
             context.read<VfEventsignupscreenBloc>().add(
                   VfEventsignupscreenInitialEvent(
                     eventId,
@@ -114,7 +49,6 @@ class VfEventsignupscreenScreen extends StatelessWidget {
                 );
           }
 
-          // Return the actual screen widget
           return const VfEventsignupscreenScreen();
         },
       ),
@@ -124,23 +58,27 @@ class VfEventsignupscreenScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: BlocListener<VfEventsignupscreenBloc, VfEventsignupscreenState>(
-        listenWhen: (previous, current) =>
-            previous.successMessage != current.successMessage &&
-            current.successMessage!.isNotEmpty,
-        listener: (context, state) {
-          if (state.successMessage!.isNotEmpty) {
-            // Show the success message in a SnackBar
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.successMessage ?? ''),
-                backgroundColor: Colors.green, // Optional styling
-              ),
-            );
-          }
-        },
-        child: Scaffold(
-          body: BlocSelector<VfEventsignupscreenBloc, VfEventsignupscreenState,
+      child: Scaffold(
+        appBar: const VfAppBarWithTitleBackButton(
+          title: 'Event Sign Up',
+          showSearchIcon: false,
+          showFilterIcon: false,
+        ),
+        body: BlocListener<VfEventsignupscreenBloc, VfEventsignupscreenState>(
+          listenWhen: (previous, current) =>
+              previous.successMessage != current.successMessage &&
+              current.successMessage!.isNotEmpty,
+          listener: (context, state) {
+            if (state.successMessage!.isNotEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.successMessage ?? ''),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          },
+          child: BlocSelector<VfEventsignupscreenBloc, VfEventsignupscreenState,
               VfEventsignupscreenModel?>(
             selector: (state) => state.vfEventsignupscreenModelObj,
             builder: (context, vfEventsignupscreenModelObj) {
@@ -154,31 +92,32 @@ class VfEventsignupscreenScreen extends StatelessWidget {
 
               return Column(
                 children: [
-                  SizedBox(height: 50.h),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 2.h),
+                      padding: EdgeInsets.symmetric(horizontal: 16.h),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildEventDetails(
                               context, vfEventsignupscreenModelObj),
-                          SizedBox(height: 6.h),
+                          const SizedBox(height: 16),
                           Text(
-                            "lbl_select_shifts".tr,
-                            style: CustomTextStyles.titleMediumGray90003,
+                            "Select Shifts",
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium!
+                                .copyWith(color: const Color(0xFF0070BB)),
                           ),
-                          SizedBox(height: 8.h),
+                          const SizedBox(height: 8),
                           _buildShiftSelection(context,
                               vfEventsignupscreenModelObj.orgEvent!.shifts),
-                          SizedBox(height: 40.h),
+                          const SizedBox(height: 40),
                           Center(
                             child: CustomElevatedButton(
-                              width: 106.h,
-                              text: "lbl_sign_up".tr,
+                              width: 120,
+                              text: "Sign Up",
                               onPressed: () {
-                                final List<String> selectedShiftIds =
-                                    []; // Gather selected shift IDs from your state or UI
+                                final List<String> selectedShiftIds = [];
                                 context.read<VfEventsignupscreenBloc>().add(
                                       SaveEventSignUp(selectedShiftIds),
                                     );
@@ -204,6 +143,7 @@ class VfEventsignupscreenScreen extends StatelessWidget {
   ) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -237,9 +177,7 @@ class VfEventsignupscreenScreen extends StatelessWidget {
                       _buildDetailRow(
                         context,
                         Icons.group,
-                        "Organizer: " +
-                            (vfEventsignupscreenModelObj.orgEvent?.orgName ??
-                                'Unknown Organizer'),
+                        "Organizer: ${vfEventsignupscreenModelObj.orgEvent?.orgName ?? 'Unknown Organizer'}",
                       ),
                       const SizedBox(height: 8),
                       _buildDetailRow(
@@ -255,9 +193,7 @@ class VfEventsignupscreenScreen extends StatelessWidget {
                       _buildDetailRow(
                         context,
                         Icons.location_on,
-                        "Venue: " +
-                            (vfEventsignupscreenModelObj.orgEvent!.address ??
-                                'Unknown Address'),
+                        "Venue: ${vfEventsignupscreenModelObj.orgEvent!.address ?? 'Unknown Address'}",
                       ),
                     ],
                   ),
@@ -272,17 +208,23 @@ class VfEventsignupscreenScreen extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context)
                   .textTheme
-                  .bodyLarge!
+                  .bodyMedium!
                   .copyWith(color: Colors.black54),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                // Dispatch an event to update the visibility state
                 context
                     .read<VfEventsignupscreenBloc>()
                     .add(ToggleContactInfoEvent());
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0070BB),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               child: BlocBuilder<VfEventsignupscreenBloc,
                   VfEventsignupscreenState>(
                 builder: (context, state) {
@@ -290,12 +232,6 @@ class VfEventsignupscreenScreen extends StatelessWidget {
                       ? 'Hide Coordinator Info'
                       : 'Show Coordinator Info');
                 },
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -307,18 +243,14 @@ class VfEventsignupscreenScreen extends StatelessWidget {
                       const Divider(),
                       Text(
                         "Coordinator Contact Information",
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall!
-                            .copyWith(color: Colors.black87),
+                        style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                            color: Colors.black87), // Improved visibility
                       ),
-                      _buildContactInfo(
-                          context), // Assuming _buildContactInfo is defined
+                      _buildContactInfo(context),
                     ],
                   );
                 } else {
-                  return SizedBox
-                      .shrink(); // Return an empty widget when hidden
+                  return const SizedBox.shrink();
                 }
               },
             ),
@@ -332,7 +264,7 @@ class VfEventsignupscreenScreen extends StatelessWidget {
       {bool isTitle = false}) {
     return Row(
       children: [
-        Icon(icon, color: Colors.green, size: isTitle ? 24 : 20),
+        Icon(icon, color: const Color(0xFF0070BB), size: isTitle ? 24 : 20),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -376,15 +308,18 @@ class VfEventsignupscreenScreen extends StatelessWidget {
       {bool isEmail = false}) {
     return Row(
       children: [
-        Icon(icon, color: Colors.green, size: 20),
+        Icon(icon, color: const Color(0xFF0070BB), size: 20),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                color: Colors.black87,
-                decoration: isEmail ? TextDecoration.underline : null,
-              ),
-          overflow: TextOverflow.ellipsis,
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  color:
+                      Colors.black87, // Improved text color for better contrast
+                  decoration: isEmail ? TextDecoration.underline : null,
+                ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -393,9 +328,8 @@ class VfEventsignupscreenScreen extends StatelessWidget {
   Widget _buildShiftSelection(BuildContext context, List<Shift> shifts) {
     return BlocBuilder<VfEventsignupscreenBloc, VfEventsignupscreenState>(
       builder: (context, state) {
-        // Check if shifts are available
         if (shifts.isEmpty) {
-          return Center(child: Text('No shifts available.'));
+          return const Center(child: Text('No shifts available.'));
         }
 
         return ListView.builder(
@@ -404,24 +338,19 @@ class VfEventsignupscreenScreen extends StatelessWidget {
           itemCount: shifts.length,
           itemBuilder: (context, index) {
             final shift = shifts[index];
-            // print("shift: $shift");
             return EventListTile(
-              key: ValueKey(shift.shiftId), // Assigning the shiftId as key
+              key: ValueKey(shift.shiftId),
               eventName: shift.activity,
               minAge: shift.minAge ?? 0,
               registeredParticipants: shift.numberOfParticipants ?? 0,
               totalParticipants: shift.maxNumberOfParticipants ?? 0,
               startTime: DateFormat('hh:mm a').format(shift.startTime),
               endTime: DateFormat('hh:mm a').format(shift.endTime),
-              isSelected: state.selectedShifts[index], // Bind to selected state
+              isSelected: state.selectedShifts[index],
               onSelected: (value) {
-                // Retrieve the shiftId along with the selection
                 final shiftId = key.toString();
-                //  print("shiftId: $shiftId");
-                // Pass both the index and shiftId to the BLoC event
                 context.read<VfEventsignupscreenBloc>().add(
-                      ToggleShiftSelectionEvent(
-                          index, value ?? false, shiftId ?? ''),
+                      ToggleShiftSelectionEvent(index, value ?? false, shiftId),
                     );
               },
             );

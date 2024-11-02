@@ -20,8 +20,9 @@ class orgVoluEventState extends Equatable {
   final bool manageEvents;
   final bool updateEvent;
   final Voluevents? eventSelected; // Nullable
+  final bool hasNavigated;
 
-  orgVoluEventState({
+  const orgVoluEventState({
     this.eventId = '',
     this.shiftId1 = '',
     this.shiftId2 = '',
@@ -40,8 +41,12 @@ class orgVoluEventState extends Equatable {
     this.eventDetails = false,
     this.manageEvents = false,
     this.updateEvent = false,
-    this.eventSelected, // Default to null
+    this.eventSelected = null,
+    this.hasNavigated = true,
   });
+
+  // Initial state
+  static const orgVoluEventState initial = orgVoluEventState();
 
   orgVoluEventState copyWith({
     String? eventId,
@@ -63,6 +68,7 @@ class orgVoluEventState extends Equatable {
     bool? manageEvents,
     bool? updateEvent,
     Voluevents? eventSelected,
+    bool? hasNavigated,
   }) {
     return orgVoluEventState(
       eventId: eventId ?? this.eventId,
@@ -84,6 +90,7 @@ class orgVoluEventState extends Equatable {
       manageEvents: manageEvents ?? this.manageEvents,
       updateEvent: updateEvent ?? this.updateEvent,
       eventSelected: eventSelected ?? this.eventSelected,
+      hasNavigated: hasNavigated ?? this.hasNavigated,
     );
   }
 
@@ -108,5 +115,6 @@ class orgVoluEventState extends Equatable {
         manageEvents,
         updateEvent,
         eventSelected,
+        hasNavigated,
       ];
 }

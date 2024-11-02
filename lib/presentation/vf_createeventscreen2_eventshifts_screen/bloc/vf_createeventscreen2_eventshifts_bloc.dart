@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../../../core/app_export.dart';
 import '../models/vf_createeventscreen2_eventshifts_model.dart';
 import 'package:volufriend/crud_repository/volufriend_crud_repo.dart';
+import 'package:intl/intl.dart';
 
 part 'vf_createeventscreen2_eventshifts_event.dart';
 part 'vf_createeventscreen2_eventshifts_state.dart';
@@ -55,23 +56,39 @@ class VfCreateeventscreen2EventshiftsBloc extends Bloc<
             shift1ActivityInputController:
                 _createController(orgEventShift[0].activity),
             shift1StartTimeController: _createController(
-                orgEventShift[0].startTime?.toIso8601String()),
-            shift1EndTimeController:
-                _createController(orgEventShift[0].endTime?.toIso8601String()),
+              orgEventShift[0].startTime != null
+                  ? DateFormat('hh:mm a').format(orgEventShift[0].startTime!)
+                  : null,
+            ),
+            shift1EndTimeController: _createController(
+              orgEventShift[0].endTime != null
+                  ? DateFormat('hh:mm a').format(orgEventShift[0].endTime!)
+                  : null,
+            ),
             shift1MaxParticipantsController: _createController(
-                orgEventShift[0].maxNumberOfParticipants?.toString()),
-            shift1MinimumAgeController:
-                _createController(orgEventShift[0].minAge?.toString()),
+              orgEventShift[0].maxNumberOfParticipants?.toString(),
+            ),
+            shift1MinimumAgeController: _createController(
+              orgEventShift[0].minAge?.toString(),
+            ),
             shift2ActivityInputController:
                 _createController(orgEventShift[1].activity),
             shift2StartTimeController: _createController(
-                orgEventShift[1].startTime?.toIso8601String()),
-            shift2EndTimeController:
-                _createController(orgEventShift[1].endTime?.toIso8601String()),
+              orgEventShift[1].startTime != null
+                  ? DateFormat('hh:mm a').format(orgEventShift[1].startTime!)
+                  : null,
+            ),
+            shift2EndTimeController: _createController(
+              orgEventShift[1].endTime != null
+                  ? DateFormat('hh:mm a').format(orgEventShift[1].endTime!)
+                  : null,
+            ),
             shift2MaxParticipantsController: _createController(
-                orgEventShift[1].maxNumberOfParticipants?.toString()),
-            shift2MinimumAgeController:
-                _createController(orgEventShift[1].minAge?.toString()),
+              orgEventShift[1].maxNumberOfParticipants?.toString(),
+            ),
+            shift2MinimumAgeController: _createController(
+              orgEventShift[1].minAge?.toString(),
+            ),
             isSaved: false,
             isLoading: false, // Stop loading state
           ));
@@ -172,7 +189,9 @@ class VfCreateeventscreen2EventshiftsBloc extends Bloc<
     final eventId = state.eventId;
     final shift1Activity = state.shift1ActivityInputController?.text ?? '';
     final shift1StartTime = state.shift1StartTimeController?.text ?? '';
+
     final shift1EndTime = state.shift1EndTimeController?.text ?? '';
+
     final shift1MaxParticipants =
         state.shift1MaxParticipantsController?.text ?? '';
     final shift1MinimumAge = state.shift1MinimumAgeController?.text ?? '';
@@ -183,14 +202,18 @@ class VfCreateeventscreen2EventshiftsBloc extends Bloc<
         state.shift2MaxParticipantsController?.text ?? '';
     final shift2MinimumAge = state.shift2MinimumAgeController?.text ?? '';
 
+// Convert the time using a helper function
+    final shift1StartDateTime = _convertStringToDateTime(shift1StartTime);
+    final shift1EndDateTime = _convertStringToDateTime(shift1EndTime);
+
     eventShifts = [
       Shift(
         shiftId: state.vfCreateeventscreen2EventshiftsModelObj?.eventShifts[0]
                 .shiftId ??
             '',
         activity: shift1Activity,
-        startTime: DateTime.tryParse(shift1StartTime) ?? DateTime.now(),
-        endTime: DateTime.tryParse(shift1EndTime) ?? DateTime.now(),
+        startTime: shift1StartDateTime,
+        endTime: shift1EndDateTime,
         maxNumberOfParticipants: int.tryParse(shift1MaxParticipants) ?? 0,
         minAge: int.tryParse(shift1MinimumAge) ?? 0,
         eventId: state.eventId ?? '',
@@ -213,7 +236,7 @@ class VfCreateeventscreen2EventshiftsBloc extends Bloc<
             0,
       ),
     ];
-    print('eventShifts $eventShifts');
+
     emit(state.copyWith(
       vfCreateeventscreen2EventshiftsModelObj:
           (state.vfCreateeventscreen2EventshiftsModelObj ??
@@ -236,10 +259,24 @@ class VfCreateeventscreen2EventshiftsBloc extends Bloc<
     ));
   }
 
+  DateTime _convertStringToDateTime(String timeString) {
+    final now = DateTime.now();
+    try {
+      final format = DateFormat.jm(); // 'h:mm a' format
+      final parsedTime = format.parse(timeString);
+      return DateTime(
+          now.year, now.month, now.day, parsedTime.hour, parsedTime.minute);
+    } catch (e) {
+      print("Error parsing time: $e");
+      return now; // Fallback if parsing fails
+    }
+  }
+
   void _onUpdateShift1StartTime(
     UpdateShift1StartTimeEvent event,
     Emitter<VfCreateeventscreen2EventshiftsState> emit,
   ) {
+    print('event.starttime ${event.starttime}');
     emit(state.copyWith(
       shift1StartTimeController: _createController(event.starttime),
     ));
@@ -249,6 +286,7 @@ class VfCreateeventscreen2EventshiftsBloc extends Bloc<
     UpdateShift1EndTimeEvent event,
     Emitter<VfCreateeventscreen2EventshiftsState> emit,
   ) {
+    print('event.endtime ${event.endtime}');
     emit(state.copyWith(
       shift1EndTimeController: _createController(event.endtime),
     ));

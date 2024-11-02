@@ -124,7 +124,9 @@ class VfCreateeventscreen1EventdetailsBloc extends Bloc<
         await Future.wait([
           _onCausesLoadDropdownDataEvent(LoadCausesDropdownDataEvent(), emit),
           _populateEventHostingOptions(LoadEventHostingOptionsEvent(), emit),
-          if (event.eventId != null)
+          if (event.eventId != null &&
+              event.eventId!.isNotEmpty &&
+              event.eventId != '')
             _fetchEventDetails(FetchEventDetails(event.eventId!), emit),
         ]);
 

@@ -115,8 +115,9 @@ class ApproveAllHoursEvent extends VfApprovehoursscreenEvent {
 class RejectAllHoursEvent extends VfApprovehoursscreenEvent {
   final String shiftId;
   final int shiftIndex;
-  RejectAllHoursEvent(this.shiftId, this.shiftIndex);
+  final String approverId;
+  RejectAllHoursEvent(this.shiftId, this.shiftIndex, this.approverId);
 
   @override
-  List<Object?> get props => [shiftId, shiftIndex];
+  List<Object?> get props => [shiftId, shiftIndex, approverId];
 }

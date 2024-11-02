@@ -30,9 +30,13 @@ import '../presentation/vf_userattendancereport_screen/vf_userattendancereportpa
 import '../presentation/vf_volunteeringcalendarpage_screen/vf_volunteeringcalendarpage_screen.dart';
 import '../presentation/vf_notificationspage_screen/vf_notificationspage_screen.dart';
 import '../presentation/vf_eventdetailspage_screen/vf_eventdetailspage_screen.dart';
-import '../presentation/vf_settings_screen/bloc/vf_settings_bloc.dart';
+import '../presentation/vf_eventlist_screen/vf_eventlistscreenforapprove.dart';
+import 'package:volufriend/presentation/vf_eventlist_screen/vf_eventListforDetails.dart';
 
 class AppRoutes {
+  static const String vfEventListForDetails = '/vf_eventlistfordetails';
+  static const String vfEventListForApprove = '/vf_eventlistforapprove';
+
   static const String vfSettingsScreen = '/vf_settingsscreen';
 
   static const String vfEventsearchScreen = '/vf_eventsearchscreen';
@@ -115,6 +119,8 @@ class AppRoutes {
   static const String initialRoute = '/initialRoute';
 
   static Map<String, WidgetBuilder> get routes => {
+        vfEventListForDetails: VfEventListDetailsScreen.builder,
+        vfApprovehoursscreenScreen: VfApprovehoursscreenScreen.builder,
         vfSettingsScreen: VfSettingsScreen.builder,
         vfEventsearchScreen: VfEventSearchScreen.builder,
         vfEventdetailspageScreen: VfEventdetailspageScreen.builder,

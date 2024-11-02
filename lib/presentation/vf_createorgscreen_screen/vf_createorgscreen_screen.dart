@@ -2,29 +2,19 @@ import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/validation_functions.dart';
 import '../../data/models/selectionPopupModel/selection_popup_model.dart';
-import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_title.dart';
-import '../../widgets/app_bar/appbar_trailing_image.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
 import '../../widgets/custom_checkbox_button.dart';
-import '../../widgets/custom_drop_down.dart';
 import '../../widgets/custom_elevated_button.dart';
 import '../../widgets/custom_floating_text_field.dart';
-import '../vf_homescreen_page/vf_homescreen_page.dart';
 import 'bloc/vf_createorgscreen_bloc.dart';
 import 'models/vf_createorgscreen_model.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
 import '/crud_repository/volufriend_crud_repo.dart';
 import '../../auth/bloc/login_user_bloc.dart';
+import '../../widgets/vf_app_bar_with_title_back_button.dart';
 import '../../presentation/app_navigation_screen/bloc/app_navigation_bloc.dart';
 
-// ignore_for_file: must_be_immutable
 class VfCreateorgscreenScreen extends StatelessWidget {
-  VfCreateorgscreenScreen({Key? key})
-      : super(
-          key: key,
-        );
+  VfCreateorgscreenScreen({Key? key}) : super(key: key);
   final controller = MultiSelectController<causes>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -33,7 +23,7 @@ class VfCreateorgscreenScreen extends StatelessWidget {
     final userState = userBloc.state;
 
     if (userState is NoHomeOrg || userState is LoginUserWithHomeOrg) {
-      final userId = userState.userId; // Access userId from the user object
+      final userId = userState.userId;
 
       return BlocProvider<VfCreateorgscreenBloc>(
         create: (context) => VfCreateorgscreenBloc(
@@ -41,12 +31,11 @@ class VfCreateorgscreenScreen extends StatelessWidget {
             userId: userId,
             vfCreateorgscreenModelObj: VfCreateorgscreenModel(),
           ),
-          context.read<VolufriendCrudService>(), // Access the service here
+          context.read<VolufriendCrudService>(),
         )..add(VfCreateorgscreenInitialEvent()),
         child: VfCreateorgscreenScreen(),
       );
     } else {
-      // Handle the case where user data is not available
       return Scaffold(
         body: Center(child: Text('User data is not available')),
       );
@@ -58,102 +47,69 @@ class VfCreateorgscreenScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        appBar: _buildAppBar(context),
-        body: BlocBuilder<VfCreateorgscreenBloc, VfCreateorgscreenState>(
-          builder: (context, state) {
+        appBar: VfAppBarWithTitleBackButton(
+          title: "Create Organization",
+          onBackPressed: () => Navigator.of(context).pop(),
+        ),
+        body: BlocListener<VfCreateorgscreenBloc, VfCreateorgscreenState>(
+          listener: (context, state) {
             if (state.isSaved) {
-              // Perform navigation after successful save
-              final sourceScreen = context.select<AppNavigationBloc, String?>(
-                (bloc) => bloc.state.sourceScreen,
-              );
-
-              if (sourceScreen != null) {
-                NavigatorService.pushNamed(sourceScreen);
-              } else {
-                NavigatorService.pushNamed(AppRoutes.vfHomescreenPage);
-              }
+              NavigatorService.pushNamed(AppRoutes.vfHomescreenContainerScreen);
             } else if (state.errorMessage != null) {
-              // Handle error case
               showErrorDialog(context, state.errorMessage!);
             }
-            return Form(
-              key: _formKey,
-              child: SizedBox(
-                width: double.maxFinite,
-                child: SingleChildScrollView(
-                  child: Container(
-                    width: double.maxFinite,
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    decoration: AppDecoration.fillBlueGray,
+          },
+          child: BlocBuilder<VfCreateorgscreenBloc, VfCreateorgscreenState>(
+            builder: (context, state) {
+              return Form(
+                key: _formKey,
+                child: Container(
+                  width: double.maxFinite,
+                  color: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  child: SingleChildScrollView(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: double.maxFinite,
-                          padding: EdgeInsets.symmetric(horizontal: 16.h),
-                          decoration: AppDecoration.fillGray,
-                          child: Column(
-                            children: [
-                              SizedBox(height: 16.h),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildIsSchoolCheckbox(context),
-                                  if (state.isSchoolCheckbox ?? false)
-                                    _buildSchoolLabel(context),
-                                ],
-                              ),
-                              SizedBox(height: 16.h),
-                              buildUserCauseMultiselect(
-                                context,
-                                controller,
-                                state.selectedMultiSelectValuesforCauses,
-                              ),
-                              SizedBox(height: 16.h),
-                              _buildOrgNameInput(context),
-                              SizedBox(height: 16.h),
-                              _buildOrgAddressInput(context),
-                              SizedBox(height: 16.h),
-                              _buildOrgEmailInput(context),
-                              SizedBox(height: 16.h),
-                              _buildOrgPhoneInput(context),
-                              SizedBox(height: 16.h),
-                              _buildOrgWebsiteInput(context),
-                              SizedBox(height: 16.h),
-                              _buildOrgContactInput(context),
-                              SizedBox(height: 16.h),
-                              _buildOrgPictureUrlInput(context),
-                              SizedBox(height: 32.h),
-                              _buildSaveButton(context),
-                              SizedBox(height: 16.h),
-                            ],
-                          ),
+                        _buildIsSchoolCheckbox(context),
+                        if (state.isSchoolCheckbox ?? false)
+                          _buildSchoolLabel(context),
+                        SizedBox(height: 16),
+                        buildUserCauseMultiselect(
+                          context,
+                          controller,
+                          state.selectedMultiSelectValuesforCauses,
                         ),
+                        SizedBox(height: 16),
+                        _buildOrgNameInput(context),
+                        SizedBox(height: 16),
+                        _buildOrgAddressInput(context),
+                        SizedBox(height: 16),
+                        _buildOrgEmailInput(context),
+                        SizedBox(height: 16),
+                        _buildOrgPhoneInput(context),
+                        SizedBox(height: 16),
+                        _buildOrgWebsiteInput(context),
+                        SizedBox(height: 16),
+                        _buildOrgContactInput(context),
+                        SizedBox(height: 32),
+                        _buildSaveButton(context),
                       ],
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-        /* bottomNavigationBar: SizedBox(
-        width: double.maxFinite,
-        child: _buildBottomNavigationBar(context),
-      ), */
       ),
     );
   }
 
-  // Widget for displaying a label when isSchoolCheckbox is true
   Widget _buildSchoolLabel(BuildContext context) {
     return Text(
       "Northshore School District",
-      style: TextStyle(
-        fontSize: 16.h,
-        color: Colors.black,
-      ),
+      style: TextStyle(fontSize: 16, color: Colors.black),
     );
   }
 
@@ -166,9 +122,7 @@ class VfCreateorgscreenScreen extends StatelessWidget {
           content: Text(errorMessage),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: Text('OK'),
             ),
           ],
@@ -182,15 +136,10 @@ class VfCreateorgscreenScreen extends StatelessWidget {
       MultiSelectController<causes> controller,
       List<causes>? selectedMultiSelectValuesforCauses) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: 8.h,
-        right: 4.h,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
           VfCreateorgscreenModel?>(
-        selector: (state) {
-          return state.vfCreateorgscreenModelObj;
-        },
+        selector: (state) => state.vfCreateorgscreenModelObj,
         builder: (context, vfCreateorgscreenModelObj) {
           if (vfCreateorgscreenModelObj == null ||
               vfCreateorgscreenModelObj.causesList.isEmpty) {
@@ -205,31 +154,13 @@ class VfCreateorgscreenScreen extends StatelessWidget {
                       ))
                   .toList();
 
-          List<DropdownItem<causes>> preSelectItems =
-              selectedMultiSelectValuesforCauses
-                      ?.map((cause) => DropdownItem(
-                            label: cause.name!,
-                            value: cause,
-                          ))
-                      .toList() ??
-                  [];
-          // Initialize the controller with previously selected causes
-          if (controller.selectedItems.isEmpty) {
-            if (preSelectItems.isNotEmpty) {
-              // Initialize the controller with previously selected causes based on causeId
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                final preSelectCauseIds =
-                    preSelectItems.map((item) => item.value.id).toSet();
-                controller.selectWhere(
-                    (element) => preSelectCauseIds.contains(element.value.id));
-              });
-            }
-          }
-
           return Container(
-            height: 64.h,
-            width: double.infinity,
-            margin: EdgeInsets.only(left: 8.h, right: 4.h),
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(5.0),
+            ),
             child: MultiDropdown<causes>(
               items: items,
               controller: controller,
@@ -243,36 +174,16 @@ class VfCreateorgscreenScreen extends StatelessWidget {
               ),
               fieldDecoration: FieldDecoration(
                 hintText: 'Select your causes',
-                hintStyle: theme.textTheme.bodySmall,
-                prefixIcon: CustomImageView(
-                  imagePath: ImageConstant.imgIcArrowDropDown48px,
-                  height: 20.h,
-                  width: 20.h,
-                ),
-                showClearIcon: true,
+                prefixIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(5.0),
-                  borderSide: BorderSide(
-                    color: Colors.grey,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(5.0),
-                  borderSide: BorderSide(
-                    color: theme.primaryColor,
-                  ),
-                ),
-              ),
-              dropdownDecoration: const DropdownDecoration(
-                marginTop: 8,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(10),
+                  borderSide: BorderSide(color: Colors.grey),
                 ),
               ),
               onSelectionChange: (selectedItems) {
-                context.read<VfCreateorgscreenBloc>().add(
-                      UpdateMultiSelectValuesEvent(selectedItems),
-                    );
+                context
+                    .read<VfCreateorgscreenBloc>()
+                    .add(UpdateMultiSelectValuesEvent(selectedItems));
               },
             ),
           );
@@ -281,382 +192,109 @@ class VfCreateorgscreenScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      leadingWidth: 40.h,
-      leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgMegaphone,
-        margin: EdgeInsets.only(
-          left: 16.h,
-          top: 20.h,
-          bottom: 20.h,
-        ),
-      ),
-      centerTitle: true,
-      title: AppbarTitle(
-        text: "lbl_title".tr,
-      ),
-      actions: [
-        AppbarTrailingImage(
-          imagePath: ImageConstant.imgSearch,
-          margin: EdgeInsets.only(
-            top: 20.h,
-            right: 16.h,
-            bottom: 20.h,
-          ),
-        )
-      ],
-      styleType: Style.bgFill,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildSchoolOrgHeader(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(
-        left: 4.h,
-        right: 8.h,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: 8.h,
-        vertical: 12.h,
-      ),
-      decoration: AppDecoration.fillPrimary.copyWith(
-        borderRadius: BorderRadiusStyle.circleBorder24,
-      ),
-      width: double.maxFinite,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "lbl_hi_john_doe".tr,
-            style: theme.textTheme.titleMedium,
-          ),
-          Text(
-            "msg_bothell_high_school".tr,
-            style: theme.textTheme.titleMedium,
-          )
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
   Widget _buildIsSchoolCheckbox(BuildContext context) {
-    return Align(
+    return CustomCheckboxButton(
       alignment: Alignment.centerRight,
-      child: BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState, bool?>(
-        selector: (state) => state.isSchoolCheckbox,
-        builder: (context, isSchoolCheckbox) {
-          return CustomCheckboxButton(
-            alignment: Alignment.centerRight,
-            text: "lbl_is_school".tr,
-            value: isSchoolCheckbox,
-            textStyle: CustomTextStyles.bodyMediumBlack900,
-            onChange: (value) {
-              context.read<VfCreateorgscreenBloc>().add(
-                    ChangeIsSchoolCheckBoxEvent(
-                      value: value,
-                      parentOrgName:
-                          value ? "Northshore School District" : null,
-                    ),
-                  );
-            },
-          );
-        },
-      ),
+      text: "Is School",
+      value: context
+          .select((VfCreateorgscreenBloc bloc) => bloc.state.isSchoolCheckbox),
+      textStyle: Theme.of(context).textTheme.bodyLarge,
+      onChange: (value) {
+        context.read<VfCreateorgscreenBloc>().add(
+              ChangeIsSchoolCheckBoxEvent(
+                  value: value,
+                  parentOrgName: value ? "Northshore School District" : null),
+            );
+      },
     );
   }
 
-  /// Section Widget
-  Widget _buildMultiSelectListItem(BuildContext context) {
-    return SizedBox(
-      height: 64.h,
-      width: double.maxFinite,
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          Container(
-            height: 56.h,
-            padding: EdgeInsets.symmetric(
-              horizontal: 8.h,
-              vertical: 12.h,
-            ),
-            decoration: AppDecoration.outlinePrimary.copyWith(
-              borderRadius: BorderRadiusStyle.roundedBorder5,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.h,
-                    vertical: 4.h,
-                  ),
-                  decoration: AppDecoration.fillGray20001.copyWith(
-                    borderRadius: BorderRadiusStyle.roundedBorder5,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "lbl_in_person".tr,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      SizedBox(width: 6.h),
-                      CustomImageView(
-                        imagePath: ImageConstant.imgClosePrimary,
-                        height: 20.h,
-                        width: 20.h,
-                      )
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.only(left: 14.h),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.h,
-                    vertical: 4.h,
-                  ),
-                  decoration: AppDecoration.fillGray20001.copyWith(
-                    borderRadius: BorderRadiusStyle.roundedBorder5,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "lbl_virtual".tr,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      SizedBox(width: 4.h),
-                      CustomImageView(
-                        imagePath: ImageConstant.imgClosePrimary,
-                        height: 20.h,
-                        width: 20.h,
-                      )
-                    ],
-                  ),
-                ),
-                Spacer(),
-                CustomImageView(
-                  imagePath: ImageConstant.imgIcArrowDropDown48px,
-                  height: 20.h,
-                  width: 20.h,
-                )
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              margin: EdgeInsets.only(left: 8.h),
-              padding: EdgeInsets.symmetric(horizontal: 4.h),
-              decoration: AppDecoration.surface,
-              child: Text(
-                "msg_causes_you_work".tr,
-                textAlign: TextAlign.center,
-                style: CustomTextStyles.bodySmallRobotoPrimary,
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
   Widget _buildOrgNameInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) => state.orgNameInputController,
-      builder: (context, orgNameInputController) {
-        return CustomFloatingTextField(
-          controller: orgNameInputController,
-          labelText: "msg_organization_name".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_name".tr,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-          onChanged: (value) {
-            context
-                .read<VfCreateorgscreenBloc>()
-                .add(UpdateOrgFieldEvent(field: 'orgname', value: value));
-          },
-          validator: (value) {
-            if (!isText(value)) {
-              return "err_msg_please_enter_valid_text";
-            }
-            return null;
-          },
-        );
-      },
+    return _buildInputField(
+      context,
+      controller: context.select(
+          (VfCreateorgscreenBloc bloc) => bloc.state.orgNameInputController),
+      labelText: "Organization Name",
+      validator: (value) =>
+          value == null || value.isEmpty ? "Please enter a valid name" : null,
     );
   }
 
-  /// Section Widget
   Widget _buildOrgAddressInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) {
-        final controller = state.orgAddressInputController;
-        return controller;
-      },
-      builder: (context, orgAddressInputController) {
-        return CustomFloatingTextField(
-          controller: orgAddressInputController,
-          labelText: "msg_organization_address".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_address".tr,
-          filled: false,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-        );
-      },
+    return _buildInputField(
+      context,
+      controller: context.select(
+          (VfCreateorgscreenBloc bloc) => bloc.state.orgAddressInputController),
+      labelText: "Organization Address",
     );
   }
 
-  /// Section Widget
   Widget _buildOrgEmailInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) => state.orgEmailInputController,
-      builder: (context, orgEmailInputController) {
-        return CustomFloatingTextField(
-          controller: orgEmailInputController,
-          labelText: "msg_organization_email".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_email".tr,
-          textInputType: TextInputType.emailAddress,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-          filled: false,
-          validator: (value) {
-            if (value == null || (!isValidEmail(value, isRequired: true))) {
-              return "err_msg_please_enter_valid_email";
-            }
-            return null;
-          },
-        );
-      },
+    return _buildInputField(
+      context,
+      controller: context.select(
+          (VfCreateorgscreenBloc bloc) => bloc.state.orgEmailInputController),
+      labelText: "Organization Email",
+      keyboardType: TextInputType.emailAddress,
+      validator: (value) => value != null && !isValidEmail(value)
+          ? "Please enter a valid email"
+          : null,
     );
   }
 
-  /// Section Widget
   Widget _buildOrgPhoneInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) => state.orgPhoneInputController,
-      builder: (context, orgPhoneInputController) {
-        return CustomFloatingTextField(
-          controller: orgPhoneInputController,
-          labelText: "msg_organization_phone".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_phone".tr,
-          textInputType: TextInputType.phone,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-          filled: false,
-          validator: (value) {
-            if (!isValidPhone(value)) {
-              return "err_msg_please_enter_valid_phone_number";
-            }
-            return null;
-          },
-        );
-      },
+    return _buildInputField(
+      context,
+      controller: context.select(
+          (VfCreateorgscreenBloc bloc) => bloc.state.orgPhoneInputController),
+      labelText: "Organization Phone",
+      keyboardType: TextInputType.phone,
+      validator: (value) => value != null && !isValidPhone(value)
+          ? "Please enter a valid phone number"
+          : null,
     );
   }
 
-  /// Section Widget
-  Widget _buildOrgContactInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) => state.orgPOCNameInputController,
-      builder: (context, orgPOCNameInputController) {
-        return CustomFloatingTextField(
-          controller: orgPOCNameInputController,
-          labelText: "msg_organization_poc".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_poc".tr,
-          textInputAction: TextInputAction.done,
-          filled: false,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-        );
-      },
-    );
-  }
-
-  /// Section Widget
-  Widget _buildOrgPictureUrlInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) => state.orgPicUrlInputController,
-      builder: (context, orgPicUrlInputController) {
-        return CustomFloatingTextField(
-          controller: orgPicUrlInputController,
-          labelText: "msg_organization_picurl".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_picurl".tr,
-          textInputAction: TextInputAction.done,
-          filled: false,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-        );
-      },
-    );
-  }
-
-  /// Section Widget
   Widget _buildOrgWebsiteInput(BuildContext context) {
-    return BlocSelector<VfCreateorgscreenBloc, VfCreateorgscreenState,
-        TextEditingController?>(
-      selector: (state) => state.orgWebsiteInputController,
-      builder: (context, orgWebsiteInputController) {
-        return CustomFloatingTextField(
-          controller: orgWebsiteInputController,
-          labelText: "msg_organization_website".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_organization_website".tr,
-          textInputAction: TextInputAction.done,
-          filled: false,
-          contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
-        );
-      },
+    return _buildInputField(
+      context,
+      controller: context.select(
+          (VfCreateorgscreenBloc bloc) => bloc.state.orgWebsiteInputController),
+      labelText: "Organization Website",
     );
   }
 
-  //
+  Widget _buildOrgContactInput(BuildContext context) {
+    return _buildInputField(
+      context,
+      controller: context.select(
+          (VfCreateorgscreenBloc bloc) => bloc.state.orgPOCNameInputController),
+      labelText: "Organization POC",
+    );
+  }
+
+  Widget _buildInputField(BuildContext context,
+      {required TextEditingController? controller,
+      required String labelText,
+      TextInputType keyboardType = TextInputType.text,
+      String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: OutlineInputBorder(),
+      ),
+      keyboardType: keyboardType,
+      validator: validator,
+    );
+  }
 
   Widget _buildSaveButton(BuildContext context) {
     return CustomElevatedButton(
-      text: "lbl_save".tr,
+      text: "Save",
       onPressed: () {
         if (_formKey.currentState?.validate() ?? false) {
           context.read<VfCreateorgscreenBloc>().add(SaveOrganizationEvent());
-
-          final sourceScreen = context.select<AppNavigationBloc, String?>(
-            (bloc) => bloc.state.sourceScreen,
-          );
-          print("soruce screen");
-          print(sourceScreen);
-          // check user status and set global Login Object
-          final OrgProfileBloc = context.read<VfCreateorgscreenBloc>();
-          final OrgProfileState = OrgProfileBloc.state;
-          final userHomeOrg = UserHomeOrg(
-              userid: OrgProfileState.userId!, orgid: OrgProfileState.OrgId);
-
-          final loginUser = LoginUser(
-            userHomeOrg: userHomeOrg,
-            isLoggedIn: true,
-          );
-
-          context.read<UserBloc>().add(CheckUserStatus(user: loginUser));
-
-          if (sourceScreen != null) {
-            NavigatorService.pushNamed(sourceScreen);
-          } else {
-            // Handle case where sourceScreen is null
-            NavigatorService.pushNamed(
-                AppRoutes.vfHomescreenPage); // Fallback route
-          }
         }
       },
     );

@@ -53,6 +53,7 @@ class VfUserattendancereportpageBloc extends Bloc<
         showHomeOrgName: true,
         attendanceDateRange: event.attendanceDateRange,
         userName: event.username,
+        userId: event.userId,
       ));
     } catch (e) {
       emit(state.copyWith(

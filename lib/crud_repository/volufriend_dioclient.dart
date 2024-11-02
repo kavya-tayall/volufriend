@@ -1,31 +1,43 @@
 import 'package:dio/dio.dart';
 import 'dart:convert'; // Import the dart:convert package for json.decode
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Paths {
-  static const String baseUrl = 'http://10.0.2.2:3000';
-  // 'https://us-central1-volufriend.cloudfunctions.net/api';
-  static const String usersUrl = '$baseUrl/users';
-  static const String orgUrl = '$baseUrl/organizations';
-  static const String userhomeorgUrl = '$baseUrl/userhomeorg';
-  static const String setuserhomeorgUrl = '$baseUrl/setuserhomeorg';
-  static const String causesUrl = '$baseUrl/causes';
-  static const String eventsurl = '$baseUrl/events';
-  static const String canceleventsurl = '$baseUrl/events/cancel';
-  static const String eventswithshiftsurl =
+// Set baseUrl using environment variable or fallback to local development server
+  static final bool isProduction = bool.fromEnvironment('dart.vm.product');
+
+  static final String baseUrl = isProduction
+      ? 'https://us-central1-volufriend.cloudfunctions.net/app'
+      : 'http://10.0.2.2:3000';
+
+  // static final String baseUrl =
+  //   'https://us-central1-volufriend.cloudfunctions.net/app';
+
+  static final String usersUrl = '$baseUrl/users';
+  static final String orgUrl = '$baseUrl/organizations';
+  static final String userhomeorgUrl = '$baseUrl/userhomeorg';
+  static final String setuserhomeorgUrl = '$baseUrl/setuserhomeorg';
+  static final String causesUrl = '$baseUrl/causes';
+  static final String eventsurl = '$baseUrl/events';
+  static final String canceleventsurl = '$baseUrl/events/cancel';
+  static final String eventswithshiftsurl =
       '$baseUrl/events/events-with-shifts';
-  static const String userinterestevents = '$baseUrl/userinterestevents';
-  static const String myupcomingevents = '$baseUrl/myupcomingevents';
-  static const String eventsignupUrl = '$baseUrl/eventsignup';
-  static const String eventattendanceUrl = '$baseUrl/uservolunteeringreport';
-  static const String storeTokenUrl = '$baseUrl/storeToken';
-  static const String messageUrl = '$baseUrl/eventmessages';
-  static const String messagedeleteUrl = '$baseUrl/eventmessages/deleteall';
-  static const String orgupcomingeventsUrl = '$baseUrl/orgupcomingevents';
-  static const String geteventandshiftforapprovalUrl =
+  static final String userinterestevents = '$baseUrl/userinterestevents';
+  static final String myupcomingevents = '$baseUrl/myupcomingevents';
+  static final String eventsignupUrl = '$baseUrl/eventsignup';
+  static final String eventattendanceUrl = '$baseUrl/uservolunteeringreport';
+  static final String storeTokenUrl = '$baseUrl/storeToken';
+  static final String messageUrl = '$baseUrl/eventmessages';
+  static final String messagedeleteUrl = '$baseUrl/eventmessages/deleteall';
+  static final String orgupcomingeventsUrl = '$baseUrl/orgupcomingevents';
+  static final String orgupcomingeventsUrlPageWise =
+      '$baseUrl/orgupcomingeventspagewise';
+
+  static final String geteventandshiftforapprovalUrl =
       '$baseUrl/geteventandshiftforapproval';
-  static const String approveattendanceUrl = '$baseUrl/attendance/approve';
-  static const String geteventattendanceUrl = '$baseUrl/attendance/';
-  static const String eventshiftcheckin = '$baseUrl/attendance/checkin';
+  static final String approveattendanceUrl = '$baseUrl/attendance/approve';
+  static final String geteventattendanceUrl = '$baseUrl/attendance/';
+  static final String eventshiftcheckin = '$baseUrl/attendance/checkin';
 }
 
 /// Create a singleton class to contain all Dio methods and helper functions

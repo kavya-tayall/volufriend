@@ -9,6 +9,7 @@ import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import '../../core/app_export.dart';
 import '../../presentation/vf_homescreen_page/widgets/vf_searchscreen_page.dart';
 import '../../widgets/vf_event_filter_widget.dart';
+import '../../widgets/vf_app_bar_with_title_back_button.dart';
 
 class VfEventSearchScreen extends StatelessWidget {
   const VfEventSearchScreen({Key? key}) : super(key: key);
@@ -21,14 +22,16 @@ class VfEventSearchScreen extends StatelessWidget {
         userRole == 'Volunteer' ? userId : orgUserId;
     var listType = 'Upcoming'; // Default list type for search
 
-    // Dispatch the initial search event
-    context.read<EventListBloc>().add(EventListScreenInitialEvent(
-          listType: listType,
-          role: userRole,
-          userId: userIdorOrgUserId,
-        ));
+    // Ensure the event is only dispatched once
+    if (context.read<EventListBloc>().state.isLoading == false) {
+      context.read<EventListBloc>().add(EventListScreenInitialEvent(
+            listType: listType,
+            role: userRole,
+            userId: userIdorOrgUserId,
+          ));
+    }
 
-    return VfEventSearchScreen();
+    return const VfEventSearchScreen();
   }
 
   @override
@@ -36,70 +39,49 @@ class VfEventSearchScreen extends StatelessWidget {
     return BlocBuilder<EventListBloc, VfEventListScreenState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            title: const Text(
-              "Search Events",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: const Color(0XFF0070BB),
-            centerTitle: true,
-            elevation: 4.0,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search, color: Colors.white),
-                onPressed: () {
-                  // Show SearchPage as a bottom sheet
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => SearchPage(
-                      allEvents: state.allEvents,
-                      socialCauses: [], // Populate if available
-                      onEventTap: (event) {
-                        Navigator.pop(context); // Dismiss the bottom sheet
-                        // Handle event tap actions
-                      },
-                    ),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.filter_list, color: Colors.white),
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FilterPage(
-                        onApplyFilters: (
-                            {required DateTimeRange? dateRange,
-                            required List<String> daysOfWeek,
-                            required String timeOfDay}) {
-                          // Apply filter logic here
-                          context.read<EventListBloc>().add(FilterEventsEvent(
-                              dateRange: dateRange,
-                              daysOfWeek: daysOfWeek,
-                              timeOfDay: timeOfDay));
-                        },
-                      ),
-                    ),
-                  );
-                  if (result != null) {
-                    // Handle filter result
-                  }
-                },
-              ),
-            ],
+          appBar: VfAppBarWithTitleBackButton(
+            title: "Manage Events",
+            onBackPressed: () {
+              Navigator.of(context).pop();
+            },
+            onSearchPressed: () {
+              // Show SearchPage as a bottom sheet
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => SearchPage(
+                  allEvents: state.allEvents,
+                  socialCauses: [], // Populate if available
+                  onEventTap: (event) {
+                    _handleListOnTap(context, event['eventId']!);
+                    Navigator.pop(context); // Dismiss the search page
+                  },
+                ),
+              );
+            },
+            onFilterPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FilterPage(
+                    onApplyFilters: ({
+                      required DateTimeRange? dateRange,
+                      required List<String> daysOfWeek,
+                      required String? timeOfDay,
+                    }) {
+                      context.read<EventListBloc>().add(FilterEventsEvent(
+                          dateRange: dateRange,
+                          daysOfWeek: daysOfWeek,
+                          timeOfDay: timeOfDay!));
+                    },
+                  ),
+                ),
+              );
+              if (result != null) {
+                // Handle filter result if needed
+              }
+            },
           ),
           body: SingleChildScrollView(
             child: state.vfEventListModelObj?.upcomingeventslistItemList
@@ -143,93 +125,82 @@ class VfEventSearchScreen extends StatelessWidget {
 
   Widget _buildEventList(BuildContext context, bool isApproveMode,
       UpcomingeventslistItemModel model) {
-    return Dismissible(
-      key: Key(model.id ?? DateTime.now().toString()), // Unique key
-      background: Container(
-        color: Colors.green,
-        alignment: Alignment.centerLeft,
-        padding: EdgeInsets.only(left: 20),
-        child: Icon(Icons.check_circle, color: Colors.white),
-      ),
-      secondaryBackground: Container(
-        color: Colors.red,
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 20),
-        child: Icon(Icons.delete, color: Colors.white),
-      ),
-      onDismissed: (direction) {
-        if (direction == DismissDirection.startToEnd) {
-          // Mark event as completed
-          _markEventAsCompleted(context, model.id!);
-        } else {
-          // Delete event
-          _deleteEvent(context, model.id!);
-        }
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        _highlightSelectedEvent(context, model.id!);
+        _handleListOnTap(context, model.id!);
       },
-      child: GestureDetector(
-        onTap: () {
-          _highlightSelectedEvent(context, model.id!);
-
-          // Trigger event signup or event details
-          final orgEventBloc = BlocProvider.of<orgVoluEventBloc>(context);
-          final orgEventState = orgEventBloc.state;
-
-          if (orgEventState.showalluserevents) {
-            context.read<orgVoluEventBloc>().add(eventsignupEvent(model.id!));
-          } else if (orgEventState.showallorgevents ||
-              getUserRole(context) == "Organization") {
-            final upcomingEventsList = BlocProvider.of<EventListBloc>(context)
-                .state
-                .upcomingEventsList;
-            final selectedEvent = upcomingEventsList
-                ?.firstWhere((element) => element.eventId == model.id);
-
-            context
-                .read<orgVoluEventBloc>()
-                .add(eventdetailsEvent(model.id!, selectedEvent!));
-          }
-        },
-        child: Container(
-          color: (model.isSelected ?? false)
-              ? Colors.blue.withOpacity(0.1)
-              : Colors.transparent,
-          child: UpcomingeventslistItemWidget(
-            onMenuSelected: (p0, p1) => {},
-            upcomingeventslistItemModelObj: model,
-            trailing: isApproveMode
-                ? Icon(Icons.radio_button_unchecked,
-                    color: Colors.blueAccent, size: 24.0)
-                : null,
-            onTap: () {
-              // Handle tap event
-            },
-            onLongPress: () {
-              // Handle long press event
-            },
-            onDismissed: () {
-              // Handle dismiss event
-            },
-          ),
+      child: Container(
+        color: (model.isSelected ?? false)
+            ? Colors.blue.withOpacity(0.1)
+            : Colors.transparent,
+        child: UpcomingeventslistItemWidget(
+          onLongPress: () => {},
+          onDismissed: () {},
+          onMenuSelected: (p0, p1) => {},
+          upcomingeventslistItemModelObj: model,
+          trailing: isApproveMode
+              ? Icon(Icons.radio_button_unchecked,
+                  color: Colors.blueAccent, size: 24.0)
+              : null,
+          onTap: () {
+            _highlightSelectedEvent(context, model.id!);
+            _handleListOnTap(context, model.id!);
+          },
         ),
       ),
     );
   }
 
-  // Helper method to mark event as completed
-  void _markEventAsCompleted(BuildContext context, String eventId) {
-    context
-        .read<EventListBloc>()
-        .add(MarkEventAsCompletedEvent(eventId: eventId));
-  }
-
-  // Helper method to delete event
-  void _deleteEvent(BuildContext context, String eventId) {
-    context.read<EventListBloc>().add(DeleteEvent(eventId: eventId));
-  }
-
-  // Helper method to highlight selected event
   void _highlightSelectedEvent(BuildContext context, String eventId) {
     context.read<EventListBloc>().add(HighlightEvent(eventId: eventId));
+  }
+
+  void _handleListOnTap(BuildContext context, String eventId) {
+    print('Event ID: ${eventId}');
+
+    // Trigger the event signup or event details action
+    final orgEventBloc = BlocProvider.of<orgVoluEventBloc>(context);
+    final orgEventState = orgEventBloc.state;
+
+    final upcomingEventsList =
+        BlocProvider.of<EventListBloc>(context).state.upcomingEventsList;
+
+    final selectedEvent = upcomingEventsList != null
+        ? upcomingEventsList.firstWhere((element) => element.eventId == eventId)
+        : null;
+
+    if (orgEventState.showalluserevents) {
+      context.read<orgVoluEventBloc>().add(eventsignupEvent(eventId));
+    } else if (orgEventState.showallorgevents &&
+        getUserRole(context) == "Organization") {
+      context
+          .read<orgVoluEventBloc>()
+          .add(eventdetailsEvent(eventId, selectedEvent!));
+    } else if (orgEventState.approvehours) {
+      // Fetch the shift IDs
+      final shiftid1 = selectedEvent?.shifts[0].shiftId ?? '';
+      final shiftid2 = selectedEvent?.shifts[1].shiftId ?? '';
+
+      // Dispatch the event to the Bloc
+      if (selectedEvent != null) {
+        context
+            .read<orgVoluEventBloc>()
+            .add(approvehoursEvent(eventId, shiftid1, shiftid2, selectedEvent));
+      } else {
+        // Handle the case where selectedEvent is null
+        print('Selected event is null');
+      }
+    } else if (orgEventState.manageEvents) {
+      context
+          .read<orgVoluEventBloc>()
+          .add(eventdetailsEvent(eventId, selectedEvent!));
+    } else if (orgEventState.eventDetails) {
+      context
+          .read<orgVoluEventBloc>()
+          .add(eventdetailsEvent(eventId, selectedEvent!));
+    }
   }
 
   static String getUserRole(BuildContext context) {

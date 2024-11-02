@@ -11,6 +11,7 @@ class VfVolunteeringcalendarpageState extends Equatable {
   final DateTime currentMonthEnd;
   final int monthsFetched;
   final String Role;
+  final String? userId;
 
   const VfVolunteeringcalendarpageState({
     required this.selectedDay,
@@ -23,6 +24,7 @@ class VfVolunteeringcalendarpageState extends Equatable {
     required this.currentMonthEnd,
     required this.monthsFetched,
     required this.Role,
+    this.userId,
   });
 
   VfVolunteeringcalendarpageState copyWith({
@@ -36,6 +38,7 @@ class VfVolunteeringcalendarpageState extends Equatable {
     DateTime? currentMonthEnd,
     int? monthsFetched,
     String? Role,
+    String? userId,
   }) {
     return VfVolunteeringcalendarpageState(
       selectedDay: selectedDay ?? this.selectedDay,
@@ -48,6 +51,7 @@ class VfVolunteeringcalendarpageState extends Equatable {
       currentMonthEnd: currentMonthEnd ?? this.currentMonthEnd,
       monthsFetched: monthsFetched ?? this.monthsFetched,
       Role: Role ?? this.Role,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -63,5 +67,6 @@ class VfVolunteeringcalendarpageState extends Equatable {
         currentMonthEnd,
         monthsFetched,
         Role,
+        userId,
       ];
 }

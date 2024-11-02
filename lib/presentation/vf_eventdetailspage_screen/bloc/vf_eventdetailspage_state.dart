@@ -1,8 +1,6 @@
 part of 'vf_eventdetailspage_bloc.dart';
 
 /// Represents the state of VfEventsignupscreen in the application.
-
-// ignore_for_file: must_be_immutable
 class VfEventsdetailspageState extends Equatable {
   final VfEventdetailspageModel? vfEventdetailsModelObj;
   final String? errorMessage;
@@ -10,10 +8,11 @@ class VfEventsdetailspageState extends Equatable {
   final bool showContactInfo; // New property to manage visibility
   final List<bool> selectedShifts;
   final List<String> selectedShiftIds; // Tracks the selected shift IDs
-
+  final bool isLoading;
   final String orgId;
   final String eventId;
   final String userId;
+  final bool cancelsucess;
 
   const VfEventsdetailspageState({
     this.vfEventdetailsModelObj,
@@ -25,7 +24,23 @@ class VfEventsdetailspageState extends Equatable {
     this.orgId = '',
     this.eventId = '',
     this.userId = '',
+    this.isLoading = false,
+    this.cancelsucess = false,
   });
+
+  static const initial = VfEventsdetailspageState(
+    vfEventdetailsModelObj: null,
+    errorMessage: '',
+    successMessage: '',
+    showContactInfo: false,
+    selectedShifts: [],
+    selectedShiftIds: [],
+    orgId: '',
+    eventId: '',
+    userId: '',
+    isLoading: false,
+    cancelsucess: false,
+  );
 
   @override
   List<Object?> get props => [
@@ -38,6 +53,8 @@ class VfEventsdetailspageState extends Equatable {
         orgId,
         eventId,
         userId,
+        isLoading,
+        cancelsucess,
       ];
 
   VfEventsdetailspageState copyWith({
@@ -50,6 +67,8 @@ class VfEventsdetailspageState extends Equatable {
     String? orgId,
     String? eventId,
     String? userId,
+    bool? isLoading,
+    bool? cancelsucess,
   }) {
     return VfEventsdetailspageState(
       vfEventdetailsModelObj:
@@ -62,6 +81,8 @@ class VfEventsdetailspageState extends Equatable {
       orgId: orgId ?? this.orgId,
       eventId: eventId ?? this.eventId,
       userId: userId ?? this.userId,
+      isLoading: isLoading ?? this.isLoading,
+      cancelsucess: cancelsucess ?? this.cancelsucess,
     );
   }
 }

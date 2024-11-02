@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import 'package:volufriend/core/utils/size_utils.dart';
 import 'package:volufriend/crud_repository/volufriend_crud_repo.dart';
-import 'package:volufriend/widgets/custom_elevated_button.dart';
+import 'package:volufriend/widgets/vf_app_bar_with_title_back_button.dart';
 import 'bloc/vf_userattendancereportpage_bloc.dart';
 import 'models/vf_userattendancereportpage_model.dart';
 import '../../auth/bloc/login_user_bloc.dart';
@@ -20,8 +20,6 @@ class VfUserAttendanceReportPageScreen extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) {
-            context.read<orgVoluEventBloc>().add(resetEvent());
-
             final userBloc = BlocProvider.of<UserBloc>(context);
             final userState = userBloc.state;
 
@@ -33,7 +31,6 @@ class VfUserAttendanceReportPageScreen extends StatelessWidget {
               ),
             );
 
-            // Add the event to load attendance based on user state
             if (userState is LoginUserWithHomeOrg) {
               final userId = userState.userId!;
               final username = userState.user.username ?? '';
@@ -66,64 +63,6 @@ class VfUserAttendanceReportPageScreen extends StatelessWidget {
 class VfUserAttendanceReportPageScreenContent extends StatelessWidget {
   const VfUserAttendanceReportPageScreenContent({Key? key}) : super(key: key);
 
-  Widget _buildDateRangePicker(BuildContext context) {
-    // Watch for changes in the selected date range from the Bloc's state
-    final selectedRange = context
-        .watch<VfUserattendancereportpageBloc>()
-        .state
-        .attendanceDateRange;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select Date Range:',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.blueGrey[800],
-          ),
-        ),
-        const SizedBox(height: 8),
-        CustomElevatedButton(
-          onPressed: () async {
-            // Show the date range picker with the current selected range as initial value
-            final DateTimeRange? picked = await showDateRangePicker(
-              context: context,
-              firstDate: DateTime(2024),
-              lastDate: DateTime.now(),
-              initialDateRange: selectedRange,
-            );
-
-            // Only dispatch the event if a valid range is picked
-            if (picked != null) {
-              print('Picked Date Range: $picked');
-              context
-                  .read<VfUserattendancereportpageBloc>()
-                  .add(UpdateDateRangeEvent(picked));
-
-              // Dispatch the UpdateAttendanceEvent after updating the date range
-              context.read<VfUserattendancereportpageBloc>().add(
-                    UpdateAttendanceEvent(
-                      attendanceDateRange: picked,
-                      userId: context.read<UserBloc>().state.userId!,
-                      username: context
-                              .read<VfUserattendancereportpageBloc>()
-                              .state
-                              .userName ??
-                          '',
-                    ),
-                  );
-            }
-          },
-          text: selectedRange == null
-              ? 'Select Date Range' // If no range is selected, show prompt
-              : '${DateFormat('MM/dd/yyyy').format(selectedRange.start)} - ${DateFormat('MM/dd/yyyy').format(selectedRange.end)}',
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final attendances = context
@@ -132,110 +71,162 @@ class VfUserAttendanceReportPageScreenContent extends StatelessWidget {
         .vfUserattendancereportpageModelObj
         ?.userAttendance;
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: _buildAppBar(context, attendances ?? []),
-        body: Container(
-          width: double.maxFinite,
-          margin: EdgeInsets.only(top: 14.h),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 24.h),
-                BlocBuilder<VfUserattendancereportpageBloc,
-                    VfUserattendancereportpageState>(
-                  builder: (context, state) {
-                    if (!state.isLoading) {
-                      final userName = state.userName ?? '';
-                      return Text(
-                        'Volunteering Hours Report for $userName',
+    return Scaffold(
+      appBar: const VfAppBarWithTitleBackButton(
+        title: 'Volunteering Hours Report',
+        showSearchIcon: false,
+        showFilterIcon: false,
+      ),
+      body: Container(
+        width: double.maxFinite,
+        margin: EdgeInsets.only(top: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 24.h),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 16.h),
+              BlocBuilder<VfUserattendancereportpageBloc,
+                  VfUserattendancereportpageState>(
+                builder: (context, state) {
+                  final userName = state.userName ?? '';
+                  return Text(
+                    'Volunteering Hours Report for $userName',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0070BB),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 16.h),
+              BlocBuilder<VfUserattendancereportpageBloc,
+                  VfUserattendancereportpageState>(
+                builder: (context, state) {
+                  return _buildDateRangePicker(
+                      context, state.attendanceDateRange);
+                },
+              ),
+              SizedBox(height: 24.h),
+              BlocBuilder<VfUserattendancereportpageBloc,
+                  VfUserattendancereportpageState>(
+                builder: (context, state) {
+                  if (state.isLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state.vfUserattendancereportpageModelObj
+                          ?.userAttendance?.isNotEmpty ==
+                      true) {
+                    return AttendanceList(
+                        attendances: state.vfUserattendancereportpageModelObj!
+                            .userAttendance!);
+                  } else {
+                    return Center(
+                      child: Text(
+                        'No data available',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueGrey[800],
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-                SizedBox(height: 16.h),
-                // Use BlocBuilder to manage the date range picker button state
-                _buildDateRangePicker(context),
-                SizedBox(height: 16.h),
-                BlocListener<VfUserattendancereportpageBloc,
-                    VfUserattendancereportpageState>(
-                  listener: (context, state) {
-                    // Listen for changes in loading state or error messages
-                    if (state.isLoading) {
-                      // You can show a loading indicator here if needed
-                    } else if (state.errorMessage.isNotEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(state.errorMessage)),
-                      );
-                    }
-                  },
-                  child: BlocBuilder<VfUserattendancereportpageBloc,
-                      VfUserattendancereportpageState>(
-                    builder: (context, state) {
-                      if (state.isLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state.vfUserattendancereportpageModelObj
-                              ?.userAttendance?.isNotEmpty ==
-                          true) {
-                        final attendances = state
-                            .vfUserattendancereportpageModelObj!
-                            .userAttendance!;
-                        return AttendanceTable(attendances: attendances);
-                      } else {
-                        return Center(
-                          child: Text(
-                            'No data available',
-                            style: TextStyle(
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w600),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _generatePdf(
+          attendances ?? [],
+          context.read<VfUserattendancereportpageBloc>().state.userName ?? '',
+          context
+                  .read<VfUserattendancereportpageBloc>()
+                  .state
+                  .attendanceDateRange
+                  ?.start ??
+              DateTime.now(),
+          context
+                  .read<VfUserattendancereportpageBloc>()
+                  .state
+                  .attendanceDateRange
+                  ?.end ??
+              DateTime.now(),
+        ),
+        backgroundColor: Color(0xFF0070BB),
+        label: Row(
+          children: const [
+            Icon(Icons.picture_as_pdf, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Print Report', style: TextStyle(color: Colors.white)),
+          ],
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(
-      BuildContext context, List<Attendance> attendances) {
-    return AppBar(
-      title: const Text('User Attendance Report'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.picture_as_pdf),
-          onPressed: () {
-            _generatePdf(
-              attendances,
-              context.read<VfUserattendancereportpageBloc>().state.userName ??
-                  '',
-              context
-                  .read<VfUserattendancereportpageBloc>()
-                  .state
-                  .attendanceDateRange
-                  .start,
-              context
-                  .read<VfUserattendancereportpageBloc>()
-                  .state
-                  .attendanceDateRange
-                  .end,
-            );
-          },
-        ),
-      ],
+  Widget _buildDateRangePicker(
+      BuildContext context, DateTimeRange? selectedDateRange) {
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDateRangePicker(
+          context: context,
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now(),
+          initialDateRange: selectedDateRange ??
+              DateTimeRange(
+                start: DateTime.now().subtract(const Duration(days: 30)),
+                end: DateTime.now(),
+              ),
+        );
+        if (picked != null) {
+          context
+              .read<VfUserattendancereportpageBloc>()
+              .add(UpdateDateRangeEvent(picked));
+
+          context.read<VfUserattendancereportpageBloc>().add(
+                UpdateAttendanceEvent(
+                  userId: context
+                      .read<VfUserattendancereportpageBloc>()
+                      .state
+                      .userId,
+                  username: context
+                      .read<VfUserattendancereportpageBloc>()
+                      .state
+                      .userName,
+                  attendanceDateRange: picked,
+                ),
+              );
+        }
+      },
+      child: BlocBuilder<VfUserattendancereportpageBloc,
+          VfUserattendancereportpageState>(
+        builder: (context, state) {
+          final displayDateRange = state.attendanceDateRange;
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Color(0xFF0070BB)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  displayDateRange != null
+                      ? '${DateFormat('MM/dd/yyyy').format(displayDateRange.start)} - ${DateFormat('MM/dd/yyyy').format(displayDateRange.end)}'
+                      : 'Select Date Range',
+                  style: const TextStyle(
+                    color: Color(0xFF0070BB),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Icon(Icons.calendar_today, color: Color(0xFF0070BB)),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -244,147 +235,76 @@ class VfUserAttendanceReportPageScreenContent extends StatelessWidget {
     final pdf = pw.Document();
     final currentDateTime = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final formattedUserName = userName.isNotEmpty ? userName : "Unknown User";
-
-    // Format the date range
     final dateRange =
         '${DateFormat('MM/dd/yyyy').format(startDate)} - ${DateFormat('MM/dd/yyyy').format(endDate)}';
 
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text(
-                'Attendance Report for $formattedUserName',
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
+              pw.Container(
+                padding: const pw.EdgeInsets.all(12),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.blue, width: 1.5),
+                  borderRadius: pw.BorderRadius.circular(8),
                 ),
-              ),
-              pw.Text(
-                'Date Range: $dateRange',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-              pw.Text(
-                'Generated on: $currentDateTime',
-                style: pw.TextStyle(
-                  fontSize: 14,
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Attendance Report for $formattedUserName',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.blueGrey800,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                      'Date Range: $dateRange',
+                      style:
+                          pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+                    ),
+                    pw.Text(
+                      'Generated on: $currentDateTime',
+                      style:
+                          pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+                    ),
+                  ],
                 ),
               ),
               pw.SizedBox(height: 16),
               pw.Table(
-                border: pw.TableBorder.all(),
+                border: pw.TableBorder.all(
+                    color: PdfColors.blueGrey300, width: 0.5),
                 children: [
                   pw.TableRow(
+                    decoration: pw.BoxDecoration(color: PdfColors.blue100),
                     children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Organization Name',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Event Date',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Event Name',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Shift Activity',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Coordinator Name',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Email',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(
-                          'Phone',
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+                      _pdfTableHeader('Organization Name'),
+                      _pdfTableHeader('Event Date'),
+                      _pdfTableHeader('Event Name'),
+                      _pdfTableHeader('Shift Activity'),
+                      _pdfTableHeader('Hours'),
+                      _pdfTableHeader('Coordinator Name'),
+                      _pdfTableHeader('Email'),
                     ],
                   ),
                   ...attendances.map((attendance) {
                     return pw.TableRow(
                       children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(attendance.organizationName),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(DateFormat('EEEE, d MMMM, y')
-                              .format(DateTime.parse(attendance.eventDate))),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(attendance.eventName),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(attendance.shiftName),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(attendance.coordinatorName ?? ''),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(attendance.coordinatorEmail ?? ''),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text(attendance.coordinatorName ?? ''),
-                        ),
+                        _pdfTableCell(attendance.organizationName),
+                        _pdfTableCell(DateFormat('yyyy-MM-dd')
+                            .format(DateTime.parse(attendance.eventDate))),
+                        _pdfTableCell(attendance.eventName),
+                        _pdfTableCell(attendance.shiftName),
+                        _pdfTableCell(attendance.hoursAttended.toString()),
+                        _pdfTableCell(attendance.coordinatorName),
+                        _pdfTableCell(attendance.coordinatorEmail),
                       ],
                     );
                   }),
@@ -401,77 +321,93 @@ class VfUserAttendanceReportPageScreenContent extends StatelessWidget {
       filename: 'Attendance_Report_$formattedUserName$currentDateTime.pdf',
     );
   }
-}
 
-class AttendanceTable extends StatelessWidget {
-  final List<Attendance> attendances;
-
-  const AttendanceTable({required this.attendances, Key? key})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final horizontalScrollController = ScrollController();
-    final verticalScrollController = ScrollController();
-
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        controller: horizontalScrollController,
-        child: Scrollbar(
-          thumbVisibility: true,
-          controller: horizontalScrollController,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            controller: verticalScrollController,
-            child: Scrollbar(
-              thumbVisibility: true,
-              controller: verticalScrollController,
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(Colors.blue),
-                dataRowColor:
-                    WidgetStateProperty.resolveWith((row) => Colors.white),
-                columns: [
-                  DataColumn(label: _buildHeaderCell('Organization Name')),
-                  DataColumn(label: _buildHeaderCell('Event Date')),
-                  DataColumn(label: _buildHeaderCell('Event Name')),
-                  DataColumn(label: _buildHeaderCell('Shift Activity')),
-                  DataColumn(label: _buildHeaderCell('Coordinator Name')),
-                  DataColumn(label: _buildHeaderCell('Email')),
-                  DataColumn(label: _buildHeaderCell('Hours Attended')),
-                ],
-                rows: attendances.map((attendance) {
-                  return DataRow(cells: [
-                    DataCell(Text(attendance.organizationName)),
-                    DataCell(Text(DateFormat('EEEE, d MMMM, y')
-                        .format(DateTime.parse(attendance.eventDate)))),
-                    DataCell(Text(attendance.eventName)),
-                    DataCell(Text(attendance.shiftName)),
-                    DataCell(Text(attendance.coordinatorName)),
-                    DataCell(Text(attendance.coordinatorEmail)),
-                    DataCell(Text(attendance.hoursAttended.toString())),
-                  ]);
-                }).toList(),
-              ),
-            ),
-          ),
+  pw.Widget _pdfTableHeader(String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontWeight: pw.FontWeight.bold,
+          fontSize: 12,
+          color: PdfColors.blueGrey800,
         ),
+        textAlign: pw.TextAlign.center,
       ),
     );
   }
 
-  static Widget _buildHeaderCell(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Text(
-        label,
-        style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+  pw.Widget _pdfTableCell(String text) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+        textAlign: pw.TextAlign.center,
+      ),
+    );
+  }
+}
+
+class AttendanceList extends StatelessWidget {
+  final List<Attendance> attendances;
+
+  const AttendanceList({required this.attendances, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: attendances.length,
+      itemBuilder: (context, index) {
+        final attendance = attendances[index];
+        return Card(
+          color: Colors.white,
+          elevation: 3,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRow('Organization', attendance.organizationName),
+                _buildRow('Event Date', attendance.eventDate),
+                _buildRow('Event Name', attendance.eventName),
+                _buildRow('Shift Activity', attendance.shiftName),
+                _buildRow(
+                    'Hours Attended', attendance.hoursAttended.toString()),
+                _buildRow('Coordinator', attendance.coordinatorName),
+                _buildRow('Email', attendance.coordinatorEmail),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        children: [
+          Text(
+            '$label: ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0070BB),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }

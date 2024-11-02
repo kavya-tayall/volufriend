@@ -20,6 +20,8 @@ import '../vf_homescreen_container_screen/bloc/vf_homescreen_container_bloc.dart
 import 'package:volufriend/presentation/vf_createeventscreen2_eventshifts_screen/bloc/vf_createeventscreen2_eventshifts_bloc.dart';
 import 'package:volufriend/presentation/vf_createeventscreen1_eventdetails_screen/bloc/vf_createeventscreen1_eventdetails_bloc.dart';
 import 'package:volufriend/presentation/vf_createeventscreen3_eventadditionaldetails_screen/bloc/vf_createeventscreen3_eventadditionaldetails_bloc.dart';
+import 'package:volufriend/presentation/vf_eventlist_screen/bloc/vf_eventlist_bloc.dart';
+import '/core/utils/cause_cache_service.dart'; // Adjust path as needed
 
 class VfHomescreenPage extends StatelessWidget {
   const VfHomescreenPage({Key? key}) : super(key: key);
@@ -40,6 +42,7 @@ class VfHomescreenPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String userRole = getUserRole(context);
+    final causes = CauseCacheService().getCauseNamesList(); // Uses cached data
 
     Voluevents fetchTodayEvent() {
       return Voluevents(
@@ -68,6 +71,7 @@ class VfHomescreenPage extends StatelessWidget {
         updatedBy: 'admin',
         EventHostingType: ['In-Person'],
         orgName: 'Springfield Volunteers',
+        totalEventSignups: 7,
         shifts: [
           Shift(
             shiftId: 'shift123',
@@ -76,6 +80,8 @@ class VfHomescreenPage extends StatelessWidget {
             startTime: DateTime.now(),
             endTime: DateTime.now().add(Duration(hours: 4)),
             maxNumberOfParticipants: 10,
+            totalSignups: 7,
+            totalCheckins: 5,
           ),
         ],
       );
@@ -104,7 +110,7 @@ class VfHomescreenPage extends StatelessWidget {
                       allEvents: BlocProvider.of<VfHomescreenBloc>(context)
                           .state
                           .allEvents,
-                      socialCauses: [],
+                      socialCauses: causes,
                       onEventTap: (event) {
                         print('Event tapped: $event');
                         final upcomingEventsList =
@@ -171,7 +177,17 @@ class VfHomescreenPage extends StatelessWidget {
               SizedBox(height: 20),
 
               // Today's Event
-              if (todayEvent != null) TodayEventWidget(event: todayEvent),
+              if (todayEvent != null)
+                TodayEventWidget(
+                  event: todayEvent,
+                  userRole: userRole,
+                  onButtonPressed: () {
+                    // Custom behavior you want to define when the button is pressed
+                    context
+                        .read<orgVoluEventBloc>()
+                        .add(eventdetailsEvent(todayEvent.eventId, todayEvent));
+                  },
+                ),
               SizedBox(height: 20),
 
               // Organization-Specific Content
@@ -286,6 +302,9 @@ class VfHomescreenPage extends StatelessWidget {
 
   void _handleVolunteerActionStateChanges(
       BuildContext context, orgVoluEventState state) {
+    // Check if the current state is the initial state and exit if so
+    if (state == orgVoluEventState.initial) return;
+
     if (state.scheduledEvents) {
       NavigatorService.pushNamed(AppRoutes.vfMyupcomingeventscreenScreen);
     } else if (state.volunteerProfile) {
@@ -318,14 +337,11 @@ class VfHomescreenPage extends StatelessWidget {
   Widget _buildVolunteerIntrestedEvents(BuildContext context) {
     return BlocListener<orgVoluEventBloc, orgVoluEventState>(
       listener: (context, state) {
+        print(
+            'Listening to orgVoluEventBloc state change from home screen _buildVolunteerIntrestedEvents');
         if (state.eventsignup) {
+          print('Navigating to vfEventsignupscreenScreen');
           NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen);
-        } else if (state.eventDetails) {
-          NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen);
-        } else if (state.updateEvent) {
-          resetEventInitializationFlags(context);
-          NavigatorService.pushNamed(
-              AppRoutes.vfCreateeventscreen1EventdetailsScreen);
         }
       },
       child:
@@ -349,7 +365,8 @@ class VfHomescreenPage extends StatelessWidget {
                 onDismissed: () => context
                     .read<VfHomescreenBloc>()
                     .add(UpcomingEventDismissedEvent(eventId: model.id!)),
-                onMenuSelected: (action, id) => _handleMenuAction(action, id),
+                onMenuSelected: (action, id) => (),
+                showMenu: false, // Pass showMenu as false here
               );
             },
           );
@@ -360,7 +377,8 @@ class VfHomescreenPage extends StatelessWidget {
 
   void _handleEventTapped(
       BuildContext context, UpcomingeventslistItemModel model, String Role) {
-    resetEventInitializationFlags(context);
+    context.read<orgVoluEventBloc>().add(resetEvent());
+
     context
         .read<VfHomescreenBloc>()
         .add(UpcomingEventTappedEvent(eventId: model.id!));
@@ -376,11 +394,6 @@ class VfHomescreenPage extends StatelessWidget {
           .read<orgVoluEventBloc>()
           .add(UpdateEvent(model.id!, selectedEvent!));
       NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen);
-    } else {
-      context
-          .read<orgVoluEventBloc>()
-          .add(eventdetailsEvent(model.id!, selectedEvent!));
-      NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen);
     }
   }
 
@@ -521,38 +534,58 @@ class VfHomescreenPage extends StatelessWidget {
     } else {
       context.read<orgVoluEventBloc>().add(showallusereventsEvent());
     }
+
     NavigatorService.pushNamed(AppRoutes.vfEventListScreen);
   }
 
   /// Builds the list of upcoming events for the organization
   Widget _buildOrgUpcomingEventsList(BuildContext context) {
     return BlocListener<orgVoluEventBloc, orgVoluEventState>(
-      listener: (context, state) => _handleEventStateChange(context, state),
+      listener: (context, state) => _handleOrgEventStateChange(context, state),
       child:
           BlocSelector<VfHomescreenBloc, VfHomescreenState, VfHomescreenModel?>(
         selector: (state) => state.vfHomescreenModelObj,
         builder: (context, vfHomescreenModelObj) {
-          return _buildEventsList(context, vfHomescreenModelObj);
+          return _buildOrgEventsList(context, vfHomescreenModelObj);
         },
       ),
     );
   }
 
-  /// Handles the state change of the event bloc
-  void _handleEventStateChange(BuildContext context, orgVoluEventState state) {
+  void _handleOrgEventStateChange(
+      BuildContext context, orgVoluEventState state) {
+    // Local flag to track if navigation has occurred
+    bool _hasNavigated = false;
+
+    print('Listening to orgVoluEventBloc state change from home screen');
+
+    if (state == orgVoluEventState.initial || _hasNavigated) {
+      return; // Prevent navigation if state is initial or navigation has already occurred
+    }
+
     if (state.eventsignup) {
-      NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen);
-    } else if (state.eventDetails) {
-      NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen);
+      _hasNavigated = true;
+      NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen)
+          .then((_) => _hasNavigated = false); // Reset flag after returning
+    } else if (state.eventDetails &&
+        state.eventId != null &&
+        state.eventId.isNotEmpty &&
+        !state.showallorgevents) {
+      print('Navigating to vfEventdetailspageScreen');
+      _hasNavigated = true;
+      NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen)
+          .then((_) => _hasNavigated = false); // Reset flag after returning
     } else if (state.updateEvent) {
       resetEventInitializationFlags(context);
+      _hasNavigated = true;
       NavigatorService.pushNamed(
-          AppRoutes.vfCreateeventscreen1EventdetailsScreen);
+              AppRoutes.vfCreateeventscreen1EventdetailsScreen)
+          .then((_) => _hasNavigated = false); // Reset flag after returning
     }
   }
 
   /// Builds the upcoming events list
-  Widget _buildEventsList(
+  Widget _buildOrgEventsList(
       BuildContext context, VfHomescreenModel? vfHomescreenModelObj) {
     final itemCount =
         (vfHomescreenModelObj?.upcomingeventslistItemList.length ?? 0)
@@ -568,7 +601,7 @@ class VfHomescreenPage extends StatelessWidget {
             UpcomingeventslistItemModel();
         return UpcomingeventslistItemWidget(
           upcomingeventslistItemModelObj: model,
-          onTap: () => _handleEventTap(context, model),
+          onTap: () => _handleOrgEventTap(context, model),
           onLongPress: () => _handleEventLongPress(model.id),
           onDismissed: () => _handleEventDismiss(context, model.id),
           onMenuSelected: (action, id) =>
@@ -579,8 +612,10 @@ class VfHomescreenPage extends StatelessWidget {
   }
 
   /// Handles the tap on an event item
-  void _handleEventTap(
+  void _handleOrgEventTap(
       BuildContext context, UpcomingeventslistItemModel model) {
+    context.read<orgVoluEventBloc>().add(resetEvent());
+
     final upcomingEventsList =
         BlocProvider.of<VfHomescreenBloc>(context).state.upcomingEventsList;
     final selectedEvent = upcomingEventsList?.firstWhere(
@@ -720,6 +755,7 @@ class VfHomescreenPage extends StatelessWidget {
   void _onOrgVoluEventStateChange(
       BuildContext context, orgVoluEventState state) {
     if (state.isLoading) {
+      resetEventInitializationFlags(context);
       _navigateToCreateEventScreen(context);
     } else if (state.orgschedule) {
       _navigateToScheduleScreen(context);
@@ -768,6 +804,7 @@ class VfHomescreenPage extends StatelessWidget {
 
   void _onActionButtonPressed(
       ActionbuttonsItemModel model, BuildContext context) {
+    context.read<orgVoluEventBloc>().add(resetEvent());
     print('Tapped on: ${model.text}');
     switch (model.text) {
       case 'Create Event':
@@ -777,9 +814,11 @@ class VfHomescreenPage extends StatelessWidget {
         context
             .read<orgVoluEventBloc>()
             .add(approvehoursEvent("j", "j", "j", Voluevents(eventId: '')));
+        context.read<EventListBloc>().add(ResetEventListScreenEvent());
         break;
       case 'Manage Events':
         context.read<orgVoluEventBloc>().add(manageEventsEvent());
+        context.read<EventListBloc>().add(ResetEventListScreenEvent());
         break;
       default:
         print('No action defined for ${model.text}');

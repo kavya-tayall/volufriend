@@ -67,6 +67,7 @@ class VfVolunteeringcalendarpageBloc extends Bloc<
       currentMonthStart: monthStart,
       currentMonthEnd: monthEnd,
       Role: event.role,
+      userId: event.userId,
     ));
   }
 

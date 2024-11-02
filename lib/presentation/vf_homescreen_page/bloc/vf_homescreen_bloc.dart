@@ -6,6 +6,7 @@ import '../models/actionbuttons_item_model.dart';
 import '../models/upcomingeventslist_item_model.dart';
 import '../models/vf_homescreen_model.dart';
 import '/crud_repository/volufriend_crud_repo.dart';
+import '/core/utils/event_cache_service.dart'; // Adjust path as needed
 
 part 'vf_homescreen_event.dart';
 part 'vf_homescreen_state.dart';
@@ -316,6 +317,7 @@ class VfHomescreenBloc extends Bloc<VfHomescreenEvent, VfHomescreenState> {
         isCanceled: event.eventStatus == 'canceled'
             ? true
             : false, // Use event.eventDate
+        imageUrlThumbnail: event.imageUrls?.first ?? "", // Use event.imageUrl
       );
     }).toList();
   }

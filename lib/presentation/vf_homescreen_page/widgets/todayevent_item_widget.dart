@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:volufriend/core/app_export.dart';
 import 'package:volufriend/crud_repository/volufriend_crud_repo.dart';
 
 class TodayEventWidget extends StatelessWidget {
   final Voluevents event; // Replace `Voluevents` with your actual Event model
+  final String userRole;
+  final VoidCallback? onButtonPressed; // Add a callback parameter
 
-  TodayEventWidget({required this.event});
+  TodayEventWidget({
+    required this.event,
+    required this.userRole,
+    this.onButtonPressed, // Initialize the callback
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +22,7 @@ class TodayEventWidget extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: EdgeInsets.all(12), // Made the padding smaller
       decoration: BoxDecoration(
-        color: Colors.blueAccent,
+        color: theme.primaryColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -74,23 +81,24 @@ class TodayEventWidget extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(
-                      '/event-details',
-                      arguments: event,
-                    );
-                  },
+                  onPressed: onButtonPressed ??
+                      () {
+                        Navigator.of(context).pushNamed(
+                          '/event-details',
+                          arguments: event,
+                        );
+                      },
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(
                         horizontal: 12, vertical: 8), // Slightly smaller button
                     backgroundColor: Colors.white,
-                    foregroundColor: Colors.blueAccent,
+                    foregroundColor: theme.primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: Text(
-                    "Check-In",
+                    userRole == 'Volunteer' ? "Check-In" : "View Details",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,

@@ -1,8 +1,6 @@
 part of 'vf_createeventscreen1_eventdetails_bloc.dart';
 
 /// Represents the state of VfCreateeventscreen1Eventdetails in the application.
-
-// ignore_for_file: must_be_immutable
 class VfCreateeventscreen1EventdetailsState extends Equatable {
   VfCreateeventscreen1EventdetailsState({
     this.isInitialized = false,
@@ -18,9 +16,9 @@ class VfCreateeventscreen1EventdetailsState extends Equatable {
     this.vfCreateeventscreen1EventdetailsModelObj,
     this.selectedEventDateInput,
     this.selectedregdeadline,
-    this.isLoading = false, // default to false
-    this.isSaved = false, // default to false
-    this.isSaving = false, // default to false
+    this.isLoading = false,
+    this.isSaved = false,
+    this.isSaving = false,
     this.errorMessage,
     this.useridinorg,
     this.orgId,
@@ -142,3 +140,29 @@ class VfCreateeventscreen1EventdetailsState extends Equatable {
     );
   }
 }
+
+/// Initial blank state for VfCreateeventscreen1EventdetailsState.
+final initialVfCreateeventscreen1EventdetailsState =
+    VfCreateeventscreen1EventdetailsState(
+  isInitialized: false,
+  eventId: '',
+  formContext: '',
+  titleInputController: TextEditingController(),
+  venueInputController: TextEditingController(),
+  eventDateInputController: TextEditingController(),
+  minimumAgeInputController: TextEditingController(),
+  registrationDeadlineInputController: TextEditingController(),
+  selectedCausesDropDownValue: null,
+  selectedEventHostingOptionDropDownValue: [],
+  vfCreateeventscreen1EventdetailsModelObj: null,
+  selectedEventDateInput: null,
+  selectedregdeadline: null,
+  isLoading: false,
+  isSaved: false,
+  isSaving: false,
+  errorMessage: null,
+  useridinorg: null,
+  orgId: null,
+  parentOrg: null,
+  orgName: null,
+);

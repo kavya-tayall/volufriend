@@ -73,11 +73,13 @@ class FetchEventAdditionalDetailsEvent
 class SaveEventShiftstoDbEvent
     extends VfCreateeventscreen3EventadditionaldetailsEvent {
   final Voluevents orgEvent;
+  final List<String>? imageUrls;
 
-  SaveEventShiftstoDbEvent({required this.orgEvent});
+  SaveEventShiftstoDbEvent(
+      {required this.orgEvent, this.imageUrls}); // imageUrls is optional
 
   @override
-  List<Object?> get props => [orgEvent];
+  List<Object?> get props => [orgEvent, imageUrls];
 }
 
 /// Event for fetching the shift details
@@ -91,6 +93,16 @@ class SaveEventAlbumtoStorageEvent
   List<Object?> get props => [eventAlbum];
 }
 
+// Event to start save-in-progress state.
+class StartSaveInProgressEvent
+    extends VfCreateeventscreen3EventadditionaldetailsEvent {
+  StartSaveInProgressEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+// Event for resetting the initialization state.
 class VfCreateeventscreen3EventadditionaldetailsResetInitializationEvent
     extends VfCreateeventscreen3EventadditionaldetailsEvent {
   VfCreateeventscreen3EventadditionaldetailsResetInitializationEvent();

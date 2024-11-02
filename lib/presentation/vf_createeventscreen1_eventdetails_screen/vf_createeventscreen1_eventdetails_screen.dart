@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:volufriend/auth/bloc/org_event_bloc.dart';
-import 'package:volufriend/presentation/vf_createeventscreen2_eventshifts_screen/bloc/vf_createeventscreen2_eventshifts_bloc.dart';
-import 'package:volufriend/presentation/vf_createeventscreen2_eventshifts_screen/vf_createeventscreen2_eventshifts_screen.dart';
+
+import 'package:volufriend/widgets/vf_app_bar_with_title_back_button.dart';
 import '../../core/app_export.dart';
 import '../../core/utils/date_time_utils.dart';
 import '../../data/models/selectionPopupModel/selection_popup_model.dart';
-import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_title.dart';
-import '../../widgets/app_bar/appbar_trailing_image.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
+
 import '../../widgets/custom_bottom_bar.dart';
 import '../../widgets/custom_drop_down.dart';
 import '../../widgets/custom_elevated_button.dart';
@@ -20,7 +16,6 @@ import 'models/vf_createeventscreen1_eventdetails_model.dart';
 import '/crud_repository/volufriend_crud_repo.dart';
 import '../../auth/bloc/login_user_bloc.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
-import '../vf_homescreen_container_screen/bloc/vf_homescreen_container_bloc.dart';
 
 // ignore_for_file: must_be_immutable
 class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
@@ -109,136 +104,115 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          title: const Text("Manage Event"),
-          backgroundColor: theme.colorScheme.primary,
+        appBar: VfAppBarWithTitleBackButton(
+          title: "Create Event",
+          showSearchIcon: false,
+          showFilterIcon: false,
+          onBackPressed: () {
+            Navigator.of(context).pop();
+          },
         ),
-        body: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsets.symmetric(vertical: 16.h), // Reduced padding
-              decoration: AppDecoration.surface,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: double.maxFinite,
-                    padding: EdgeInsets.symmetric(horizontal: 6.h),
-                    decoration: AppDecoration.fillGray,
-                    child: Column(
-                      children: [
-                        Container(
-                          width: double.maxFinite,
-                          margin: EdgeInsets.only(right: 2.h),
-                          child: Column(
-                            children: [
-                              // _buildEventTypeSection(context),
-                              _buildEventHostingTypeMultiselect(
-                                context,
-                                controller,
-                              ),
-                              SizedBox(height: 26.h),
-                              _buildTitleInput(context),
-                              SizedBox(height: 26.h),
-                              //_buildCausesDropdown(context),
-                              BlocSelector<
-                                  VfCreateeventscreen1EventdetailsBloc,
-                                  VfCreateeventscreen1EventdetailsState,
-                                  VfCreateeventscreen1EventdetailsModel?>(
-                                selector: (state) {
-                                  return state
-                                      .vfCreateeventscreen1EventdetailsModelObj;
-                                },
-                                builder: (context,
-                                    vfCreateeventscreen1EventdetailsModelObj) {
-                                  List<SelectionPopupModel> items =
-                                      vfCreateeventscreen1EventdetailsModelObj
-                                              ?.causesList
-                                              .map((cause) =>
-                                                  SelectionPopupModel(
-                                                    id: cause.id,
-                                                    title: cause.name!,
-                                                  ))
-                                              .toList() ??
-                                          [];
-                                  final selectedDropDownValueforHomeOrg = context
-                                      .read<
-                                          VfCreateeventscreen1EventdetailsBloc>()
-                                      .state
-                                      .selectedCausesDropDownValue;
-
-                                  // Determine the initial selection value
-                                  SelectionPopupModel? initialValue;
-                                  if (selectedDropDownValueforHomeOrg != null) {
-                                    initialValue = items.firstWhere(
-                                      (item) =>
-                                          item.id ==
-                                          selectedDropDownValueforHomeOrg.id,
-                                      orElse: () => SelectionPopupModel(
-                                          id: '', title: ''),
-                                    );
-                                  }
-                                  return CustomDropDown(
-                                    width: 328.h,
-                                    icon: Container(
-                                      margin: EdgeInsets.only(left: 16.h),
-                                      child: CustomImageView(
-                                        imagePath: ImageConstant
-                                            .imgIcarrowdropdown48pxPrimary,
-                                        height: 24.h,
-                                        width: 24.h,
-                                      ),
-                                    ),
-                                    hintText: "lbl_cause".tr,
-                                    alignment: Alignment.centerLeft,
-                                    items: items,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 14.h,
-                                      vertical: 18.h,
-                                    ),
-                                    onChanged: (selectedValue) {
-                                      // Handle dropdown change
-                                      context
-                                          .read<
-                                              VfCreateeventscreen1EventdetailsBloc>()
-                                          .add(
-                                            UpdateCausesDropDownSelectionEvent(
-                                                selectedValue),
-                                          );
-                                    },
-                                    // Initial selection, using the first item as default
-                                    initialValue: initialValue == null ||
-                                            initialValue.id == ''
-                                        ? null
-                                        : initialValue,
-                                  );
-                                },
-                              ),
-                              SizedBox(height: 26.h),
-                              _buildVenueInput(context),
-                              SizedBox(height: 26.h),
-                              _buildDateRow(context),
-                              // SizedBox(height: 26.h),
-                              //_buildRegistrationDeadlineInput(context),
-                              SizedBox(height: 52.h), // Reduced space
-                              _buildNextButton(context)
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+        body: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.h),
+          child: Container(
+            decoration: AppDecoration.surface.copyWith(
+              borderRadius: BorderRadius.circular(12.h),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16.h),
+                  decoration: AppDecoration.fillGray.copyWith(
+                    borderRadius: BorderRadius.circular(12.h),
                   ),
-                ],
-              ),
+                  child: Column(
+                    children: [
+                      _buildEventHostingTypeMultiselect(context, controller),
+                      SizedBox(height: 20.h),
+                      _buildTitleInput(context),
+                      SizedBox(height: 20.h),
+                      BlocSelector<
+                          VfCreateeventscreen1EventdetailsBloc,
+                          VfCreateeventscreen1EventdetailsState,
+                          VfCreateeventscreen1EventdetailsModel?>(
+                        selector: (state) =>
+                            state.vfCreateeventscreen1EventdetailsModelObj,
+                        builder: (context, model) {
+                          List<SelectionPopupModel> items = model?.causesList
+                                  .map((cause) => SelectionPopupModel(
+                                        id: cause.id,
+                                        title: cause.name!,
+                                      ))
+                                  .toList() ??
+                              [];
+                          final selectedValue = context
+                              .read<VfCreateeventscreen1EventdetailsBloc>()
+                              .state
+                              .selectedCausesDropDownValue;
+                          SelectionPopupModel? initialValue;
+                          if (selectedValue != null) {
+                            initialValue = items.firstWhere(
+                              (item) => item.id == selectedValue.id,
+                              orElse: () =>
+                                  SelectionPopupModel(id: '', title: ''),
+                            );
+                          }
+                          return CustomDropDown(
+                            width: double.infinity,
+                            icon: Padding(
+                              padding: EdgeInsets.only(left: 12.h),
+                              child: CustomImageView(
+                                imagePath:
+                                    ImageConstant.imgIcarrowdropdown48pxPrimary,
+                                height: 24.h,
+                                width: 24.h,
+                              ),
+                            ),
+                            hintText: "lbl_cause".tr,
+                            alignment: Alignment.centerLeft,
+                            items: items,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.h,
+                              vertical: 18.h,
+                            ),
+                            onChanged: (value) {
+                              context
+                                  .read<VfCreateeventscreen1EventdetailsBloc>()
+                                  .add(UpdateCausesDropDownSelectionEvent(
+                                      value));
+                            },
+                            initialValue:
+                                initialValue?.id == '' ? null : initialValue,
+                          );
+                        },
+                      ),
+                      SizedBox(height: 20.h),
+                      _buildVenueInput(context),
+                      SizedBox(height: 20.h),
+                      _buildDateRow(context),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        /* bottomNavigationBar: SizedBox(
-          width: double.maxFinite,
-          child: _buildBottomNavigationBar(context),
-        ),*/
+        bottomNavigationBar: Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.h),
+          child: CustomElevatedButton(
+            width: 120.h,
+            text: "lbl_next".tr,
+            onPressed: () {
+              final OrgProfileBloc =
+                  context.read<VfCreateeventscreen1EventdetailsBloc>();
+              OrgProfileBloc.add(SaveEventDetailsEvent());
+              NavigatorService.pushNamed(
+                AppRoutes.vfCreateeventscreen2EventshiftsScreen,
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -248,11 +222,11 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
     return BlocSelector<VfCreateeventscreen1EventdetailsBloc,
         VfCreateeventscreen1EventdetailsState, TextEditingController?>(
       selector: (state) => state.titleInputController,
-      builder: (context, titleInputController) {
+      builder: (context, controller) {
         return CustomFloatingTextField(
-          controller: titleInputController,
+          controller: controller,
           labelText: "lbl_title".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
+          labelStyle: theme.textTheme.bodyLarge,
           hintText: "lbl_title".tr,
           contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
         );
@@ -265,11 +239,11 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
     return BlocSelector<VfCreateeventscreen1EventdetailsBloc,
         VfCreateeventscreen1EventdetailsState, TextEditingController?>(
       selector: (state) => state.venueInputController,
-      builder: (context, venueInputController) {
+      builder: (context, controller) {
         return CustomFloatingTextField(
-          controller: venueInputController,
+          controller: controller,
           labelText: "lbl_event_venue".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
+          labelStyle: theme.textTheme.bodyLarge,
           hintText: "lbl_event_venue".tr,
           contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
         );
@@ -284,7 +258,6 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
       selector: (state) => state.eventDateInputController,
       builder: (context, eventDateInputController) {
         return CustomFloatingTextField(
-          width: 182.h,
           controller: eventDateInputController,
           labelText: "lbl_event_date".tr,
           labelStyle: theme.textTheme.bodyLarge!,
@@ -305,12 +278,10 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
       selector: (state) => state.registrationDeadlineInputController,
       builder: (context, registrationDeadlineInputController) {
         return CustomFloatingTextField(
-          width: 182.h,
           controller: registrationDeadlineInputController,
           labelText: "msg_registration_deadline".tr,
           labelStyle: theme.textTheme.bodyLarge!,
           hintText: "msg_registration_deadline".tr,
-          alignment: Alignment.centerLeft,
           contentPadding: EdgeInsets.fromLTRB(16.h, 24.h, 16.h, 8.h),
           onTap: () {
             onTapRegDateInput(context);
@@ -322,31 +293,37 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
 
   /// Section Widget
   Widget _buildDateRow(BuildContext context) {
-    return SizedBox(
-      width: double.maxFinite,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildEventDateInput(context),
-          _buildRegistrationDeadlineInput(context)
-        ],
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildEventDateInput(context)),
+        SizedBox(width: 12.h), // Spacing between the two date inputs
+        Expanded(child: _buildRegistrationDeadlineInput(context)),
+      ],
     );
   }
 
   /// Section Widget
+  /// Section Widget
+  /// Section Widget
   Widget _buildNextButton(BuildContext context) {
-    return CustomElevatedButton(
-      width: 106.h,
-      text: "lbl_next".tr,
-      onPressed: () {
-        final OrgProfileBloc =
-            context.read<VfCreateeventscreen1EventdetailsBloc>();
-        OrgProfileBloc.add(SaveEventDetailsEvent());
-        NavigatorService.pushNamed(
-          AppRoutes.vfCreateeventscreen2EventshiftsScreen,
-        );
-      },
+    return Padding(
+      padding: EdgeInsets.only(top: 32.h, bottom: 16.h),
+      child: Center(
+        // Center aligns the button
+        child: CustomElevatedButton(
+          width: 120.h, // Ensures button width consistency
+          text: "lbl_next".tr,
+          onPressed: () {
+            final OrgProfileBloc =
+                context.read<VfCreateeventscreen1EventdetailsBloc>();
+            OrgProfileBloc.add(SaveEventDetailsEvent());
+            NavigatorService.pushNamed(
+              AppRoutes.vfCreateeventscreen2EventshiftsScreen,
+            );
+          },
+        ),
+      ),
     );
   }
 

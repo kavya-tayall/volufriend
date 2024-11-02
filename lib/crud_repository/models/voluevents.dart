@@ -30,7 +30,7 @@ class Voluevents extends Equatable {
   final int? totalEventSignups;
   final int? totalEventCheckins;
   final String? parentOrg;
-
+  final List<String>? imageUrls;
   Voluevents({
     required this.eventId,
     this.orgUserId,
@@ -58,6 +58,7 @@ class Voluevents extends Equatable {
     this.totalEventSignups,
     this.totalEventCheckins,
     this.parentOrg,
+    this.imageUrls,
     List<Shift>? shifts, // Allow null but provide a default empty list
   }) : shifts = shifts ?? <Shift>[];
 
@@ -87,6 +88,15 @@ class Voluevents extends Equatable {
     int? totalEventSignups;
     int? totalEventCheckins;
     String parentOrg;
+    List<String>? imageUrls;
+
+    try {
+      imageUrls = json['event']?['image_urls'] != null
+          ? List<String>.from(json['event']?['image_urls'] as List<dynamic>)
+          : null;
+    } catch (e) {
+      print('Error parsing image_urls: $e');
+    }
 
     try {
       orgUserId = json['event']?['org_user_id'] as String?;
@@ -301,10 +311,11 @@ class Voluevents extends Equatable {
       totalEventSignups: totalEventSignups,
       totalEventCheckins: totalEventCheckins,
       parentOrg: parentOrg,
+      imageUrls: imageUrls,
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson({List<String>? imageUrls}) {
     print('Event ID: $eventId');
     print('parentOrg: $parentOrg');
     return {
@@ -334,6 +345,7 @@ class Voluevents extends Equatable {
       'total_signups': totalEventSignups,
       'total_checkins': totalEventCheckins,
       'parent_org': parentOrg,
+      'image_urls': imageUrls ?? [], // Defaults to an empty list if null
     };
   }
 
@@ -366,6 +378,7 @@ class Voluevents extends Equatable {
         totalEventSignups,
         totalEventCheckins,
         parentOrg,
+        imageUrls,
       ];
 }
 
@@ -533,34 +546,34 @@ class EventAdditionalDetails extends Equatable {
 @immutable
 class Shift extends Equatable {
   final String? shiftId; // Nullable as it's generated on the server
-  final DateTime? createdAt; // Nullable if not provided during creation
+  final String
+      activity; // Required field, corrected to lowercase for consistency
+  final DateTime startTime; // Required field
   final DateTime endTime; // Required field
   final String? eventId; // Nullable if not available at the time of creation
   final int? minAge; // Nullable if not provided during creation
   final int? numberOfParticipants; // Nullable, defaults to 0
-  final DateTime startTime; // Required field
-  final DateTime? updatedAt; // Nullable, may not be set initially
+  final DateTime? createdAt; // Nullable if not provided during creation
   final String? createdBy; // Nullable as it might not be set at creation time
+  final DateTime? updatedAt; // Nullable, may not be set initially
   final String? updatedBy; // Nullable, may not be set initially
   final int? maxNumberOfParticipants; // Nullable, defaults to 0
-  final String
-      activity; // Required field, corrected to lowercase for consistency
   final int? totalSignups;
   final int? totalCheckins;
 
   const Shift({
     this.shiftId, // Nullable
-    this.createdAt, // Nullable
+    required this.activity, // Required
+    required this.startTime, // Required
     required this.endTime, // Required
     this.eventId, // Nullable
     this.minAge, // Nullable
     this.numberOfParticipants = 0, // Default to 0
-    required this.startTime, // Required
-    this.updatedAt, // Nullable
+    this.createdAt, // Nullable
     this.createdBy, // Nullable
+    this.updatedAt, // Nullable
     this.updatedBy, // Nullable
     this.maxNumberOfParticipants = 0, // Default to 0
-    required this.activity, // Required
     this.totalSignups,
     this.totalCheckins,
   });
@@ -654,17 +667,17 @@ class Shift extends Equatable {
   @override
   List<Object?> get props => [
         shiftId,
-        createdAt,
+        activity,
+        startTime,
         endTime,
         eventId,
         minAge,
         numberOfParticipants,
-        startTime,
-        updatedAt,
+        createdAt,
         createdBy,
+        updatedAt,
         updatedBy,
         maxNumberOfParticipants,
-        activity,
         totalCheckins,
         totalSignups,
       ];

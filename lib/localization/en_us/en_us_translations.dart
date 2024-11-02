@@ -105,12 +105,16 @@ final Map<String, String> enUs = {
 
   // vf_CreateEventScreen2-EventShifts Screen
   "lbl_activity": "Activity",
+  "msg_activity": "Activity",
   "lbl_end_time": "End time",
   "lbl_end_time2": "End Time",
   "lbl_shift_1": "Shift 1",
   "lbl_shift_2": "Shift 2",
   "lbl_start_time": "Start time",
   "msg_click_here_to_enter2": "Click here to enter activity",
+  "lbl_max_participants": "Max Participants",
+  "msg_minimum_age": "Min Age",
+  "lbl_minimum_age": "Min Age",
   "msg_max_participants": "Max Participants",
 
   // vf_CreateEventScreen3-EventAdditionalDetails Screen

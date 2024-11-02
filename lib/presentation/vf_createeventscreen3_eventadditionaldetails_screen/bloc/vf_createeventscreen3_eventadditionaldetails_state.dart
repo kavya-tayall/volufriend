@@ -1,7 +1,5 @@
 part of 'vf_createeventscreen3_eventadditionaldetails_bloc.dart';
 
-// part of 'vf_createeventscreen3_eventadditionaldetails_bloc.dart';
-
 /// Represents the state of VfCreateeventscreen3Eventadditionaldetails in the application.
 
 // ignore_for_file: must_be_immutable
@@ -25,6 +23,7 @@ class VfCreateeventscreen3EventadditionaldetailsState extends Equatable {
     this.eventAlbum,
     this.isSavedtoDb = false,
     this.SaveDbIntent = false,
+    this.isSaveInProgress = false, // Default value added here
   })  : additionalDetailsTextAreaController =
             additionalDetailsTextAreaController ?? TextEditingController(),
         nofilechosenvalController =
@@ -57,6 +56,7 @@ class VfCreateeventscreen3EventadditionaldetailsState extends Equatable {
   final bool isInitialized;
   final bool isSavedtoDb;
   final bool SaveDbIntent;
+  final bool isSaveInProgress; // Added to the list of properties
 
   @override
   List<Object?> get props => [
@@ -78,6 +78,7 @@ class VfCreateeventscreen3EventadditionaldetailsState extends Equatable {
         eventAlbum,
         isSavedtoDb,
         SaveDbIntent,
+        isSaveInProgress, // Included in the props list
       ];
 
   VfCreateeventscreen3EventadditionaldetailsState copyWith({
@@ -100,6 +101,7 @@ class VfCreateeventscreen3EventadditionaldetailsState extends Equatable {
     EventAlbum? eventAlbum,
     bool? isSavedtoDb,
     bool? SaveDbIntent,
+    bool? isSaveInProgress, // Added to the copyWith method
   }) {
     return VfCreateeventscreen3EventadditionaldetailsState(
       eventId: eventId ?? this.eventId,
@@ -129,6 +131,8 @@ class VfCreateeventscreen3EventadditionaldetailsState extends Equatable {
       eventAlbum: eventAlbum ?? this.eventAlbum,
       isSavedtoDb: isSavedtoDb ?? this.isSavedtoDb,
       SaveDbIntent: SaveDbIntent ?? this.SaveDbIntent,
+      isSaveInProgress: isSaveInProgress ??
+          this.isSaveInProgress, // Assign this value properly
     );
   }
 }

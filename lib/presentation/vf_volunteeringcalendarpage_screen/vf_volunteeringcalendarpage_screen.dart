@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:volufriend/crud_repository/volufriend_crud_repo.dart';
@@ -49,14 +48,12 @@ class VfVolunteeringcalendarpageScreenContent extends StatelessWidget {
               VfVolunteeringcalendarpageState>(
             builder: (context, state) {
               return TableCalendar<Voluevents>(
-                firstDay: DateTime.now(), // Start calendar from today
-                lastDay: DateTime.now().add(const Duration(
-                    days: 60)), // Restrict to two months from today
+                firstDay: DateTime.now(),
+                lastDay: DateTime.now().add(const Duration(days: 60)),
                 focusedDay: state.focusedDay,
                 selectedDayPredicate: (day) =>
                     isSameDay(state.selectedDay, day),
                 calendarFormat: state.calendarFormat,
-                // Use the _eventsCache from the state directly instead of selectedEvents
                 eventLoader: (day) => context
                     .read<VfVolunteeringcalendarpageBloc>()
                     .getEventsForDayFromCache(day),
@@ -65,12 +62,8 @@ class VfVolunteeringcalendarpageScreenContent extends StatelessWidget {
                   outsideDaysVisible: false,
                 ),
                 onDaySelected: (selectedDay, focusedDay) {
-                  // Explicitly fetch events for the day or set an empty list if no events
                   context.read<VfVolunteeringcalendarpageBloc>().add(
-                      SelectDayEvent(
-                          selectedDay,
-                          focusedDay,
-                          context.read<UserBloc>().state.userId!,
+                      SelectDayEvent(selectedDay, focusedDay, state.userId!,
                           getUserRole(context)));
                 },
                 onFormatChanged: (format) {
@@ -81,7 +74,7 @@ class VfVolunteeringcalendarpageScreenContent extends StatelessWidget {
                 onPageChanged: (focusedDay) {
                   context.read<VfVolunteeringcalendarpageBloc>().add(
                       InitializeCalendarEvent(
-                          userId: context.read<UserBloc>().state.userId!,
+                          userId: state.userId!,
                           currentDate: focusedDay,
                           role: getUserRole(context)));
                 },
@@ -93,13 +86,11 @@ class VfVolunteeringcalendarpageScreenContent extends StatelessWidget {
             child: BlocBuilder<VfVolunteeringcalendarpageBloc,
                 VfVolunteeringcalendarpageState>(
               builder: (context, state) {
-                // Fetch events for the selected day from the cache directly
                 final selectedDayEvents = context
                     .read<VfVolunteeringcalendarpageBloc>()
                     .getEventsForDayFromCache(state.selectedDay);
                 final role = getUserRole(context);
 
-                // If no events on the selected day, show a message or empty list
                 if (selectedDayEvents.isEmpty) {
                   return const Center(
                     child: Text('No events for the selected day.'),
@@ -108,30 +99,24 @@ class VfVolunteeringcalendarpageScreenContent extends StatelessWidget {
 
                 return ListView.builder(
                   itemCount: selectedDayEvents.length,
-                  shrinkWrap: true,
-                  physics:
-                      NeverScrollableScrollPhysics(), // Prevent nested scroll
+                  physics: const AlwaysScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
-                    final event = selectedDayEvents[index]; // Fetch the event
+                    final event = selectedDayEvents[index];
                     return Container(
-                      width: double.maxFinite,
                       margin: const EdgeInsets.symmetric(
-                        horizontal:
-                            12.0, // Horizontal margin from the second code
-                        vertical: 4.0, // Vertical margin from the second code
+                        horizontal: 12.0,
+                        vertical: 4.0,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(), // Add border around the container
-                        borderRadius:
-                            BorderRadius.circular(12.0), // Rounded corners
-                        color: Colors.grey.shade200, // Add background color
+                        border: Border.all(),
+                        borderRadius: BorderRadius.circular(12.0),
+                        color: Colors.grey.shade200,
                       ),
                       child: ListTile(
-                          onTap: () =>
-                              print('${event.title}'), // On-tap functionality
-
-                          subtitle:
-                              _buildSelectedEventDetails(context, event, role)),
+                        onTap: () => print('${event.title}'),
+                        subtitle:
+                            _buildSelectedEventDetails(context, event, role),
+                      ),
                     );
                   },
                 );

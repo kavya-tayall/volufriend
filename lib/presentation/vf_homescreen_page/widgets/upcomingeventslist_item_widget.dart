@@ -10,6 +10,8 @@ class UpcomingeventslistItemWidget extends StatelessWidget {
   final Widget? trailing; // Trailing widget as an optional parameter
   final Function(String, String)
       onMenuSelected; // Callback to handle menu actions with ID
+  final bool
+      showMenu; // Optional parameter to control menu visibility, defaults to true
 
   const UpcomingeventslistItemWidget({
     Key? key,
@@ -19,6 +21,7 @@ class UpcomingeventslistItemWidget extends StatelessWidget {
     required this.onDismissed,
     this.trailing, // Accept trailing widget
     required this.onMenuSelected, // Callback for menu actions
+    this.showMenu = true, // Optional parameter with default value set to true
   }) : super(key: key);
 
   @override
@@ -53,12 +56,22 @@ class UpcomingeventslistItemWidget extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CustomImageView(
-                imagePath: ImageConstant.imgThumbnail,
-                height: 56.h,
-                width: 56.h,
-                radius: BorderRadius.circular(16.h),
-              ),
+              upcomingeventslistItemModelObj.imageUrlThumbnail != null &&
+                      upcomingeventslistItemModelObj
+                          .imageUrlThumbnail!.isNotEmpty
+                  ? CustomImageView(
+                      imagePath:
+                          upcomingeventslistItemModelObj.imageUrlThumbnail!,
+                      height: 56.h,
+                      width: 56.h,
+                      radius: BorderRadius.circular(16.h),
+                    )
+                  : CustomImageView(
+                      imagePath: ImageConstant.imgThumbnail,
+                      height: 56.h,
+                      width: 56.h,
+                      radius: BorderRadius.circular(16.h),
+                    ),
               SizedBox(width: 16.h),
               Expanded(
                 child: Align(
@@ -85,8 +98,8 @@ class UpcomingeventslistItemWidget extends StatelessWidget {
               SizedBox(width: 16.h),
               // Show the trailing widget if provided
               if (trailing != null) trailing!,
-              // If no trailing widget is passed, display default PopupMenuButton
-              if (trailing == null)
+              // Show the menu if `showMenu` is true and trailing widget is null
+              if (showMenu && trailing == null)
                 PopupMenuButton<String>(
                   onSelected: (String value) {
                     // Pass the selected value (e.g., edit, delete) and ID back to the parent widget

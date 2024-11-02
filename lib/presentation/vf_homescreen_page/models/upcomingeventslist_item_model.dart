@@ -9,6 +9,7 @@ class UpcomingeventslistItemModel {
     this.isSelected,
     this.isCompleted,
     this.isCanceled,
+    this.imageUrlThumbnail,
   }) {
     listItemHeadlin = listItemHeadlin ?? "List item3";
     listItemSupport = listItemSupport ??
@@ -17,6 +18,7 @@ class UpcomingeventslistItemModel {
     isSelected = isSelected ?? false;
     isCompleted = isCompleted ?? false;
     isCanceled = isCanceled ?? false;
+    imageUrlThumbnail = imageUrlThumbnail ?? "";
   }
 
   String? listItemHeadlin;
@@ -25,6 +27,7 @@ class UpcomingeventslistItemModel {
   bool? isSelected;
   bool? isCompleted;
   bool? isCanceled;
+  String? imageUrlThumbnail;
 
   // Define the copyWith method
   UpcomingeventslistItemModel copyWith({
@@ -34,6 +37,7 @@ class UpcomingeventslistItemModel {
     bool? isSelected,
     bool? isCompleted,
     bool? isCanceled,
+    String? imageUrlThumbnail,
   }) {
     return UpcomingeventslistItemModel(
       listItemHeadlin: listItemHeadlin ?? this.listItemHeadlin,
@@ -42,6 +46,7 @@ class UpcomingeventslistItemModel {
       isSelected: isSelected ?? this.isSelected,
       isCompleted: isCompleted ?? this.isCompleted,
       isCanceled: isCanceled ?? this.isCanceled,
+      imageUrlThumbnail: imageUrlThumbnail ?? this.imageUrlThumbnail,
     );
   }
 }

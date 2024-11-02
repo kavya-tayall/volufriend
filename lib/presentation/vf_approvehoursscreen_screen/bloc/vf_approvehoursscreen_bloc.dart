@@ -27,10 +27,12 @@ class VfApprovehoursscreenBloc
     on<VfSubmitApprovehourEvent>(_onSubmitApproveHours);
   }
 
-  void _onSubmitApproveHours(
+  Future<void> _onSubmitApproveHours(
     VfSubmitApprovehourEvent event,
     Emitter<VfApprovehoursscreenState> emit,
   ) async {
+    emit(state.copyWith(isSaving: true));
+
     List<Attendance> attendees;
     if (event.shiftIndex == 0) {
       attendees = state.vfApprovehoursscreenModelObj!.shift1Attendees;
@@ -40,12 +42,13 @@ class VfApprovehoursscreenBloc
       attendees = [];
     }
 
-    //final attendees = [...shift1Attendees, ...shift2Attendees];
     print('attendees: saving $attendees');
     if (attendees.isEmpty) {
+      emit(state.copyWith(isSaving: false)); // Ensure saving state is reset
       return;
     }
 
+    // Process approved attendees
     final approvedAttendees = attendees
         .where((attendance) => attendance.isApproved)
         .map((attendance) => attendance.copyWith(
@@ -54,6 +57,7 @@ class VfApprovehoursscreenBloc
             ))
         .toList();
 
+    // Process rejected attendees
     final rejectedAttendees = attendees
         .where((attendance) => attendance.isRejected)
         .map((attendance) => attendance.copyWith(
@@ -62,19 +66,59 @@ class VfApprovehoursscreenBloc
             ))
         .toList();
 
+    // Combine approved and rejected attendees
     final updatedAttendees = [...approvedAttendees, ...rejectedAttendees];
 
-    final result = await vfcrudService.saveAttendanceApproval(updatedAttendees);
-/*
-    if (result) {
-      emit(state.copyWith(
-        vfApprovehoursscreenModelObj:
-            state.vfApprovehoursscreenModelObj?.copyWith(
-          shift1Attendees: shift1Attendees,
-          shift2Attendees: shift2Attendees,
-        ),
-      ));
-    }*/
+    // Await the result from the service
+    try {
+      final result =
+          await vfcrudService.saveAttendanceApproval(updatedAttendees);
+      if (emit.isDone)
+        return; // Ensure the handler has not completed before emitting
+
+      if (result == 200) {
+        emit(state.copyWith(sucessMessage: 'Hours processed successfully'));
+      } else {
+        emit(state.copyWith(errorMessage: 'Failed to save hours'));
+      }
+    } catch (error) {
+      emit(state.copyWith(errorMessage: 'An error occurred: $error'));
+    } finally {
+      if (!emit.isDone) {
+        emit(state.copyWith(
+            isSaving: false)); // Ensure we reset the saving state
+      }
+    }
+  }
+
+  Future<void> _rejectAllHours(
+    RejectAllHoursEvent event,
+    Emitter<VfApprovehoursscreenState> emit,
+  ) async {
+    List<Attendance> updatedList = state.vfApprovehoursscreenModelObj!
+        .getAttendeesForShift(event.shiftIndex);
+
+    updatedList = updatedList
+        .map((item) => item.copyWith(
+            isApproved: false,
+            isRejected: true,
+            hoursRejected: item.hoursAttended,
+            hoursApproved: 0))
+        .toList();
+
+    emit(state.copyWith(
+        vfApprovehoursscreenModelObj: state.vfApprovehoursscreenModelObj
+            ?.copyWith(
+                shift1Attendees: event.shiftIndex == 0
+                    ? updatedList
+                    : state.vfApprovehoursscreenModelObj!.shift1Attendees,
+                shift2Attendees: event.shiftIndex == 1
+                    ? updatedList
+                    : state.vfApprovehoursscreenModelObj!.shift2Attendees)));
+
+    // Ensure the _onSubmitApproveHours function is awaited
+    await _onSubmitApproveHours(
+        VfSubmitApprovehourEvent(event.approverId, event.shiftIndex), emit);
   }
 
   void _onInitialize(
@@ -257,32 +301,6 @@ class VfApprovehoursscreenBloc
         .toList();*/
 
     print('updatedList: $updatedList');
-    emit(state.copyWith(
-        vfApprovehoursscreenModelObj: state.vfApprovehoursscreenModelObj
-            ?.copyWith(
-                shift1Attendees: event.shiftIndex == 0
-                    ? updatedList
-                    : state.vfApprovehoursscreenModelObj!.shift1Attendees,
-                shift2Attendees: event.shiftIndex == 1
-                    ? updatedList
-                    : state.vfApprovehoursscreenModelObj!.shift2Attendees)));
-  }
-
-  void _rejectAllHours(
-    RejectAllHoursEvent event,
-    Emitter<VfApprovehoursscreenState> emit,
-  ) {
-    List<Attendance> updatedList = state.vfApprovehoursscreenModelObj!
-        .getAttendeesForShift(event.shiftIndex);
-
-    updatedList = updatedList
-        .map((item) => item.copyWith(
-            isApproved: false,
-            isRejected: true,
-            hoursRejected: item.hoursAttended,
-            hoursApproved: 0))
-        .toList();
-
     emit(state.copyWith(
         vfApprovehoursscreenModelObj: state.vfApprovehoursscreenModelObj
             ?.copyWith(

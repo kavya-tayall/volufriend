@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:volufriend/core/app_export.dart';
 
 class EventListTile extends StatelessWidget {
   final String eventName;
@@ -26,55 +27,47 @@ class EventListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         child: Stack(
           children: [
-            // Min Age Label at the top-left corner with a clean design
+            // Min Age Label at the top-left corner
             Positioned(
               top: 4,
               left: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.cake_rounded, // Softer icon to indicate min age
-                        size: 16,
-                        color: Colors.teal[700],
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Min Age: $minAge',
-                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                              color: Colors.teal[700],
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                    ],
+                  Icon(
+                    Icons.cake_rounded,
+                    size: 16,
+                    color: theme.primaryColor,
                   ),
-                  const SizedBox(
-                      height: 8), // Little vertical space after Min Age
+                  const SizedBox(width: 4),
+                  Text(
+                    'Min Age: $minAge',
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: theme.primaryColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(
-                  top: 8), // Adjusted to avoid overlapping with Min Age
+              padding: const EdgeInsets.only(top: 8),
               child: Row(
                 children: [
                   // Checkbox
                   Checkbox(
                     value: isSelected,
                     onChanged: onSelected,
-                    activeColor: Colors.teal,
+                    activeColor: theme.primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -87,26 +80,26 @@ class EventListTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Event Name (Unbolded)
+                        // Event Name
                         Text(
                           eventName,
                           style:
                               Theme.of(context).textTheme.titleSmall!.copyWith(
-                                    fontWeight: FontWeight.normal, // Unbolded
+                                    fontWeight: FontWeight.bold,
                                     fontSize: 14,
-                                    color: Colors.teal[900],
+                                    color: theme.primaryColor,
                                   ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
 
-                        // Start and End time (Unbolded)
+                        // Start and End time
                         Row(
                           children: [
                             Icon(
                               Icons.access_time,
-                              color: Colors.teal[700],
+                              color: theme.primaryColor,
                               size: 14,
                             ),
                             const SizedBox(width: 4),
@@ -116,8 +109,8 @@ class EventListTile extends StatelessWidget {
                                   .textTheme
                                   .bodySmall!
                                   .copyWith(
-                                    color: Colors.teal[900],
-                                    fontWeight: FontWeight.normal, // Unbolded
+                                    color: theme.primaryColor,
+                                    fontWeight: FontWeight.normal,
                                     fontSize: 12,
                                   ),
                             ),
@@ -160,20 +153,20 @@ class EventListTile extends StatelessWidget {
   // Circular indicator for participants
   Widget _buildParticipantIndicator(BuildContext context) {
     return CircularPercentIndicator(
-      radius: 18.0, // Reduced the radius for a smaller circle
-      lineWidth: 3.5,
+      radius: 20.0,
+      lineWidth: 4.0,
       animation: true,
       percent: registeredParticipants / totalParticipants,
       center: Text(
         '$registeredParticipants/$totalParticipants',
         style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: Colors.teal[900],
+              color: theme.primaryColor,
               fontWeight: FontWeight.bold,
               fontSize: 10,
             ),
       ),
       circularStrokeCap: CircularStrokeCap.round,
-      progressColor: Colors.teal,
+      progressColor: theme.primaryColor,
       backgroundColor: Colors.grey[300]!,
     );
   }

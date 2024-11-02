@@ -1,13 +1,12 @@
 import 'package:equatable/equatable.dart';
-import 'package:volufriend/crud_repository/models/voluevents.dart'; // Ensure this is correctly referenced
-import 'package:image_field/image_field.dart';
+import 'package:volufriend/widgets/custom_image.dart';
 import 'package:volufriend/crud_repository/volufriend_crud_repo.dart';
 
 /// This class defines the variables used in the [vf_createeventscreen3_eventadditionaldetails_screen],
 /// and is typically used to hold data that is passed between different parts of the application.
 class VfCreateEventScreen3EventAdditionalDetailsModel extends Equatable {
   final String? eventId;
-  final List<ImageAndCaptionModel>
+  final List<CustomImageAndCaptionModel>
       eventImageList; // List of image URLs or asset paths
   final Coordinator? coordinator;
   final String? description;
@@ -26,7 +25,7 @@ class VfCreateEventScreen3EventAdditionalDetailsModel extends Equatable {
   VfCreateEventScreen3EventAdditionalDetailsModel copyWith({
     String? eventId,
     String? eventAlbumId,
-    List<ImageAndCaptionModel>? eventImageList,
+    List<CustomImageAndCaptionModel>? eventImageList,
     Coordinator? coordinator,
     String? description,
     EventAlbum? eventAlbum,

@@ -25,7 +25,24 @@ class EventListBloc
     on<HighlightEvent>(_onHighlightEvent);
     on<MarkEventAsCompletedEvent>(_onMarkEventAsCompletedEvent);
     on<DeleteEvent>(_onDeleteEvent);
+    on<ResetEventListScreenEvent>(_onResetEventListScreenEvent);
+    on<CancelEventEvent>(_onCancelEventFromListEvent);
   }
+
+  // Handle the reset event
+  Future<void> _onResetEventListScreenEvent(
+    ResetEventListScreenEvent event,
+    Emitter<VfEventListScreenState> emit,
+  ) async {
+    print('Handling ResetEventListScreenEvent');
+    emit(state.copyWith(
+      upcomingEventsList: null,
+      pastEventsList: null,
+      allEvents: null,
+      vfEventListModelObj: null,
+    ));
+  }
+  // Handle the initial event
 
   Future<void> _onInitialize(
     EventListScreenInitialEvent event,
@@ -44,18 +61,38 @@ class EventListBloc
             LoadUpcomingEventListEvent(userId: event.userId), emit);
       } else if (event.role == "Organization" && event.listType == "Approve") {
         print('Loading events for approval');
-        await _onLoadEventListForAttendanceApprovalEvent(
-            LoadEventListForApprovalEvent(userId: event.userId), emit);
+        List<Voluevents> upcomingEventsData =
+            await _getEventListForAttendanceApprovalEvent(event.userId!);
+        final List<Map<String, String>> allEvents =
+            convertEventsToMap(upcomingEventsData);
+
+        emit(state.copyWith(
+          ListType: event.listType,
+          upcomingEventsList: upcomingEventsData,
+          allEvents: allEvents,
+          vfEventListModelObj:
+              (state.vfEventListModelObj ?? VfEventListModel()).copyWith(
+            upcomingeventslistItemList:
+                fillUpcomingeventslistItemList(upcomingEventsData),
+          ),
+          isLoading: false, // End loading state
+        ));
       }
 
-      emit(state.copyWith(
-        ListType: event.listType,
-        vfEventListModelObj:
-            (state.vfEventListModelObj ?? VfEventListModel()).copyWith(
-          upcomingeventslistItemList: fillUpcomingeventslistItemList(),
-        ),
-        isLoading: false, // End loading state
-      ));
+      if (event.listType == "Approve") {
+        print('Do Nothing');
+      } else {
+        emit(state.copyWith(
+          ListType: event.listType,
+          vfEventListModelObj:
+              (state.vfEventListModelObj ?? VfEventListModel()).copyWith(
+            upcomingeventslistItemList:
+                fillUpcomingeventslistItemList(state.upcomingEventsList!),
+          ),
+
+          isLoading: false, // End loading state
+        ));
+      }
     } catch (error) {
       print('Error initializing state: $error');
       emit(state.copyWith(
@@ -66,17 +103,19 @@ class EventListBloc
   }
 
   // Function to fill upcoming events list item
-  List<UpcomingeventslistItemModel> fillUpcomingeventslistItemList() {
-    if (state.upcomingEventsList == null || state.upcomingEventsList!.isEmpty) {
+  List<UpcomingeventslistItemModel> fillUpcomingeventslistItemList(
+      List<Voluevents> upcomingEventsList) {
+    if (upcomingEventsList == null || upcomingEventsList.isEmpty) {
       return []; // Return an empty list if there are no events
     }
 
-    return state.upcomingEventsList!.map((event) {
+    return upcomingEventsList.map((event) {
       return UpcomingeventslistItemModel(
         id: event.eventId ?? "",
         listItemHeadlin: event.title,
         listItemSupport: event.description,
         isCanceled: event.eventStatus == "canceled" ? true : false,
+        imageUrlThumbnail: event.imageUrls?.first ?? "",
       );
     }).toList();
   }
@@ -154,17 +193,22 @@ class EventListBloc
     Emitter<VfEventListScreenState> emit,
   ) async {
     print('Handling _onLoadEventListForAttendanceApprovalEvent');
-    emit(state.copyWith(isLoading: true));
 
     try {
-      final List<Voluevents> upcomingEventsData =
+      final List<Voluevents> approveEventsList =
           await vfcrudService.geteventandshiftforapproval(event.userId!);
       final List<Map<String, String>> allEvents =
-          convertEventsToMap(upcomingEventsData);
+          convertEventsToMap(approveEventsList);
+
       emit(state.copyWith(
         isLoading: false,
-        upcomingEventsList: upcomingEventsData,
+        upcomingEventsList: approveEventsList,
         allEvents: allEvents,
+        vfEventListModelObj:
+            (state.vfEventListModelObj ?? VfEventListModel()).copyWith(
+          upcomingeventslistItemList:
+              fillUpcomingeventslistItemList(approveEventsList!),
+        ),
       ));
     } catch (error) {
       print('Error loading events for approval: $error');
@@ -173,6 +217,21 @@ class EventListBloc
         upcomingEventsList: [],
         errorMessage: 'Failed to load events for approval',
       ));
+    }
+  }
+
+  // Load events for attendance approval
+  Future<List<Voluevents>> _getEventListForAttendanceApprovalEvent(
+      String userId) async {
+    print('Handling _onLoadEventListForAttendanceApprovalEvent');
+
+    try {
+      final List<Voluevents> upcomingEventsData =
+          await vfcrudService.geteventandshiftforapproval(userId);
+      return upcomingEventsData;
+    } catch (error) {
+      print('Error loading events for approval: $error');
+      return [];
     }
   }
 
@@ -211,38 +270,77 @@ class EventListBloc
 
     try {
       // Get all upcoming events from state
-      final List<Voluevents> allEvents = state.upcomingEventsList!;
-      print('allEvents: $allEvents');
+      final List<Voluevents> allEvents = state.upcomingEventsList ?? [];
 
-      // Filter events based on the date range and day of the week
+      // Filter events based on the date range, day of the week, and time of day
       final filteredEvents = allEvents.where((volEvent) {
-        // Check if the event's start date is within the provided date range
-        final isWithinDateRange = event.dateRange == null ||
-            (volEvent.startDate != null &&
-                volEvent.startDate!.isAfter(event.dateRange!.start) &&
-                volEvent.startDate!.isBefore(event.dateRange!.end
-                    .add(Duration(hours: 23, minutes: 59, seconds: 59))));
+        if (volEvent.startDate == null) return false;
+
+        final eventDate = DateTime(volEvent.startDate!.year,
+            volEvent.startDate!.month, volEvent.startDate!.day);
+
+        // Check if the event is within the date range (ignore time if not provided)
+        bool isWithinDateRange = true;
+        if (event.dateRange != null) {
+          final startDate = DateTime(
+            event.dateRange!.start.year,
+            event.dateRange!.start.month,
+            event.dateRange!.start.day,
+          );
+          final endDate = DateTime(
+            event.dateRange!.end.year,
+            event.dateRange!.end.month,
+            event.dateRange!.end.day,
+          );
+
+          // Check if eventDate is on or between startDate and endDate
+          isWithinDateRange = eventDate.isAtSameMomentAs(startDate) ||
+              eventDate.isAtSameMomentAs(endDate) ||
+              (eventDate.isAfter(startDate) && eventDate.isBefore(endDate));
+        }
 
         // Check if the event's weekday matches any of the provided daysOfWeek
-        final eventDayOfWeek = getDayName(volEvent.startDate!.weekday);
-        final isDayOfWeek = event.daysOfWeek.contains(eventDayOfWeek);
+        bool isDayOfWeek = true;
 
-        // Return events that match both the date range and day of the week
-        return isWithinDateRange && isDayOfWeek;
+        if (event.daysOfWeek != null &&
+            event.daysOfWeek!.isNotEmpty &&
+            event.daysOfWeek != '') {
+          final eventDayOfWeek = getDayName(volEvent.startDate!.weekday);
+          isDayOfWeek = event.daysOfWeek!.contains(eventDayOfWeek);
+        }
+
+        // Check if the event's time matches the specified timeOfDay based on shifts
+        bool isTimeOfDay = true;
+        if (event.timeOfDay != null &&
+            event.timeOfDay!.isNotEmpty &&
+            event.timeOfDay != '') {
+          // Ensure shifts are available and non-empty for the event
+          final shifts = volEvent.shifts ?? [];
+          if (shifts.isNotEmpty) {
+            isTimeOfDay = shifts.any((shift) {
+              final hour = shift.startTime?.hour;
+              if (hour == null) return false;
+
+              if (event.timeOfDay == 'Morning') {
+                return hour >= 5 && hour < 12;
+              } else if (event.timeOfDay == 'Afternoon') {
+                return hour >= 12 && hour < 17;
+              } else if (event.timeOfDay == 'Evening') {
+                return hour >= 17 || hour < 5;
+              }
+              return false;
+            });
+          }
+        }
+        // Return true if all active filters match
+        return isWithinDateRange && isDayOfWeek && isTimeOfDay;
       }).toList();
-
-      print('filteredEvents: $filteredEvents');
-
-      // Emit the updated state with filtered events
-      emit(state.copyWith(
-        isLoading: false,
-        upcomingEventsList: filteredEvents,
-      ));
 
       emit(state.copyWith(
         vfEventListModelObj:
             (state.vfEventListModelObj ?? VfEventListModel()).copyWith(
-          upcomingeventslistItemList: fillUpcomingeventslistItemList(),
+          upcomingeventslistItemList:
+              fillUpcomingeventslistItemList(filteredEvents),
         ),
         isLoading: false, // End loading state
       ));
@@ -259,19 +357,19 @@ class EventListBloc
   String getDayName(int dayOfWeek) {
     switch (dayOfWeek) {
       case 1:
-        return 'Monday';
+        return 'Mon';
       case 2:
-        return 'Tuesday';
+        return 'Tue';
       case 3:
-        return 'Wednesday';
+        return 'Wed';
       case 4:
-        return 'Thursday';
+        return 'Thu';
       case 5:
-        return 'Friday';
+        return 'Fri';
       case 6:
-        return 'Saturday';
+        return 'Sat';
       case 7:
-        return 'Sunday';
+        return 'Sun';
       default:
         return 'Invalid day';
     }
@@ -423,5 +521,119 @@ class EventListBloc
         errorMessage: 'Failed to mark event as deleting',
       ));
     }
+  }
+
+  _onCancelEventFromListEvent(
+    CancelEventEvent event,
+    Emitter<VfEventListScreenState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true)); // Start loading state
+
+    try {
+      // Load upcoming event list data
+      final Voluevents updatedEventFromDb = await vfcrudService.cancelEvent(
+          eventId: event.eventId, notifyParticipants: event.notifyParticipants);
+
+      // Update the upcoming events  object list by removing the the canceled event
+      final updatedAfterCancelupcomingeventsList =
+          await _updatedUpcomingEventsListonCancel(
+              event.eventId, updatedEventFromDb, state.upcomingEventsList!);
+
+      // Convert the events to a list of maps for search after cancel
+      final List<Map<String, String>> allEventsUpdatedMapAfterCancel =
+          convertEventsToMap(updatedAfterCancelupcomingeventsList);
+
+      // Update the upcoming events list used in ListView with the canceled event updated voluevents object list
+      final updatedAfterCanceleventslistItemList =
+          await _updatedUpcomingEventsListModelonCancel(
+              event.eventId, updatedAfterCancelupcomingeventsList);
+
+      emit(
+        state.copyWith(
+          isLoading: false,
+          upcomingEventsList: updatedAfterCancelupcomingeventsList,
+          allEvents: allEventsUpdatedMapAfterCancel,
+          vfEventListModelObj:
+              (state.vfEventListModelObj ?? VfEventListModel()).copyWith(
+            upcomingeventslistItemList:
+                updatedAfterCanceleventslistItemList, // Ensure this is not null
+          ),
+        ),
+      );
+    } catch (error) {
+      // Handle errors and update state with error message
+      print('Error initializing state: $error');
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to initialize VfHomescreen state: $error',
+      ));
+    }
+  }
+
+  Future<List<UpcomingeventslistItemModel>>
+      _updatedUpcomingEventsListModelonCancel(String eventId,
+          List<Voluevents> upcomingEventsListAfterCancelUpdatedfromDb) async {
+    // Ensure upcomingEventsList is not null and contains data
+    if (upcomingEventsListAfterCancelUpdatedfromDb == null ||
+        upcomingEventsListAfterCancelUpdatedfromDb!.isEmpty) {
+      return []; // Return an empty list if there are no events
+    }
+    // Map each event to an UpcomingeventslistItemModel
+    return upcomingEventsListAfterCancelUpdatedfromDb.map((event) {
+      return UpcomingeventslistItemModel(
+        id: event.eventId ?? "", // Use event.eventId
+        listItemHeadlin:
+            event.title, // Use event.title or provide default value
+        listItemSupport:
+            event.description, // Use event.description or provide default value
+        isCanceled: event.eventStatus == 'canceled'
+            ? true
+            : false, // Use event.eventDate
+      );
+    }).toList();
+    /*
+    try {
+      // Create a new updated VfEventListModel with the event marked as canceled
+      final updatedEventListModelObj = vfHomescreenModelObjForUpdate.copyWith(
+        upcomingeventslistItemList:
+            vfHomescreenModelObjForUpdate.upcomingeventslistItemList.map((e) {
+          if (e.id == eventId) {
+            // Mark the event as canceled by updating the `isCanceled` field
+            return e.copyWith(isCanceled: true);
+          }
+          return e; // Return the original event if it doesn't match the eventId
+        }).toList(),
+      );
+
+      // Return the updated model
+      return updatedEventListModelObj.upcomingeventslistItemList;
+    } catch (e) {
+      print('Error updating event list model: $e');
+      throw Exception('Failed to update event list model.');
+    }*/
+  }
+
+  Future<List<Voluevents>> _updatedUpcomingEventsListonCancel(
+      String eventId,
+      Voluevents updatedEventFromDb,
+      List<Voluevents> upcomingEventsList) async {
+    // Find the specific event to be marked as canceled in upcomingEventsList
+    final canceledEventIndex = upcomingEventsList.indexWhere(
+      (e) => e.eventId == eventId,
+    );
+
+    if (canceledEventIndex != -1) {
+      // Create a new list and remove the event from upcomingEventsList
+      final updatedUpcomingEventsList =
+          List<Voluevents>.from(upcomingEventsList)
+            ..removeAt(canceledEventIndex);
+
+      // Add the updated event to the list
+      // updatedUpcomingEventsList.add(updatedEventFromDb); -- removing this code as it is not required becuase we do not want to show canceled
+
+      return updatedUpcomingEventsList;
+    }
+    // If the event is not found, return the original list
+    return upcomingEventsList;
   }
 }

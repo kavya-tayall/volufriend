@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:volufriend/presentation/vf_edituserprofile_screen/vf_edituserprofile_screen.dart';
 import 'package:volufriend/presentation/vf_notificationspage_screen/vf_notificationspage_screen.dart';
 import 'package:volufriend/presentation/vf_volunteeringcalendarpage_screen/vf_volunteeringcalendarpage_screen.dart';
 import '../../core/app_export.dart';
@@ -133,7 +134,7 @@ class VfHomescreenContainerScreen extends StatelessWidget {
         },
       ),
       title: Text(
-        "Your Title",
+        "",
         style: TextStyle(
           fontSize: 22, // Slightly larger font size
           fontWeight: FontWeight.w600, // Semi-bold font weight
@@ -175,7 +176,8 @@ class VfHomescreenContainerScreen extends StatelessWidget {
               horizontal: 16, vertical: 8), // Margin for spacing
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.blueAccent, // Keep the original background color
+            color:
+                theme.colorScheme.primary, // Keep the original background color
             borderRadius:
                 BorderRadius.circular(24), // Rounded corners for a modern look
             boxShadow: [
@@ -243,6 +245,7 @@ class VfHomescreenContainerScreen extends StatelessWidget {
                   destinationScreen: getCurrentRoute(type, userRole),
                 ),
               );
+          print('Current Route: ${getCurrentRoute(type, userRole)}');
           Navigator.pushNamed(
               navigatorKey.currentContext!, getCurrentRoute(type, userRole));
         },
@@ -265,7 +268,7 @@ class VfHomescreenContainerScreen extends StatelessWidget {
       case BottomBarEnum.Stats:
         return "/";
       case BottomBarEnum.Profile:
-        return "/";
+        return AppRoutes.vfEdituserprofileScreen;
       default:
         return "/";
     }
@@ -282,6 +285,8 @@ class VfHomescreenContainerScreen extends StatelessWidget {
         return VfNotificatioPageScreen.builder(context);
       case AppRoutes.vfOrgschedulescreenScreen:
         return VfVolunteeringcalendarpageScreen.builder(context);
+      case AppRoutes.vfEdituserprofileScreen:
+        return VfEdituserprofileScreen.builder(context);
 
       default:
         return DefaultWidget();

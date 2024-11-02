@@ -9,13 +9,10 @@ import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import '../../core/app_export.dart';
 import '../../presentation/vf_homescreen_page/widgets/vf_searchscreen_page.dart';
 import '../../widgets/vf_event_filter_widget.dart';
-import 'package:volufriend/presentation/vf_createeventscreen2_eventshifts_screen/bloc/vf_createeventscreen2_eventshifts_bloc.dart';
-import 'package:volufriend/presentation/vf_createeventscreen1_eventdetails_screen/bloc/vf_createeventscreen1_eventdetails_bloc.dart';
-import 'package:volufriend/presentation/vf_createeventscreen3_eventadditionaldetails_screen/bloc/vf_createeventscreen3_eventadditionaldetails_bloc.dart';
 import '/core/utils/cause_cache_service.dart'; // Adjust path as needed
 
-class VfEventListScreen extends StatelessWidget {
-  const VfEventListScreen({Key? key}) : super(key: key);
+class VfEventListDetailsScreen extends StatelessWidget {
+  const VfEventListDetailsScreen({Key? key}) : super(key: key);
 
   static Widget builder(BuildContext context) {
     final String userRole = getUserRole(context);
@@ -36,7 +33,7 @@ class VfEventListScreen extends StatelessWidget {
           role: userRole,
           userId: userIdorOrgUserId,
         ));
-    return VfEventListScreen();
+    return VfEventListDetailsScreen();
   }
 
   @override
@@ -64,9 +61,7 @@ class VfEventListScreen extends StatelessWidget {
               },
             ),
             title: Text(
-              isApproveMode
-                  ? "Select Event to Approve Hours"
-                  : "Events You Might Be Interested In",
+              isApproveMode ? "Approve Hours" : "Select Event to vieww details",
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -93,8 +88,7 @@ class VfEventListScreen extends StatelessWidget {
                       onEventTap: (event) {
                         print('Event tapped: $event');
 
-                        _handleListOnTap(
-                            context, event['eventId']!, getUserRole(context));
+                        _handleListOnTap(context, event['eventId']!);
 
                         Navigator.pop(context); // Dismiss the search page
                       },
@@ -143,10 +137,7 @@ class VfEventListScreen extends StatelessWidget {
             ],
           ),
           body: SingleChildScrollView(
-            child: !isApproveMode
-                ? _buildEventDetailsList(
-                    context, isApproveMode, getUserRole(context))
-                : _buildApproveEventList(context, isApproveMode),
+            child: _buildEventDetailsList(context),
           ),
         );
       },
@@ -172,24 +163,17 @@ class VfEventListScreen extends StatelessWidget {
   }
 
   /// Section Widget
-  Widget _buildEventList(BuildContext context, bool isApproveMode) {
+  Widget _buildEventDetailsList(BuildContext context) {
     return BlocListener<orgVoluEventBloc, orgVoluEventState>(
       listener: (context, state) {
         // Check if the current state is the initial state and exit if so
         if (state == orgVoluEventState.initial) return;
 
         // Listen to the changes in the bloc's state
-        if (state.eventsignup) {
-          // Handle navigation when eventsignup is triggered
-          NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen);
-        } else if (state.eventDetails) {
+        if (state.eventDetails && !state.hasNavigated) {
           // Handle navigation to event details when showallorgevents is triggered
+
           NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen);
-        } else if (state.updateEvent) {
-          // Handle navigation to event details when showalluserevents is triggered
-          resetEventInitializationFlags(context);
-          NavigatorService.pushNamed(
-              AppRoutes.vfCreateeventscreen1EventdetailsScreen);
         }
       },
       child: BlocSelector<EventListBloc, VfEventListScreenState,
@@ -211,14 +195,7 @@ class VfEventListScreen extends StatelessWidget {
                 upcomingeventslistItemModelObj: model,
                 onMenuSelected: (action, id) =>
                     _handleMenuSelected(context, action, id, model),
-                onTap: () =>
-                    _handleListOnTap(context, model.id!, getUserRole(context)),
-
-                // Add trailing indicator based on approveMode
-                trailing: isApproveMode
-                    ? Icon(Icons.radio_button_unchecked,
-                        color: Colors.blueAccent, size: 24.0)
-                    : null,
+                onTap: () => _handleListOnTap(context, model.id!),
                 onLongPress: () {
                   // Handle long press
                 },
@@ -233,93 +210,11 @@ class VfEventListScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget
-  Widget _buildEventDetailsList(
-      BuildContext context, bool isApproveMode, String userRole) {
-    return BlocListener<orgVoluEventBloc, orgVoluEventState>(
-      listener: (context, state) {
-        /*
-        // Check if the current state is the initial state and exit if so
-        if (state == orgVoluEventState.initial) return;
-
-        // Listen to the changes in the bloc's state
-        if (state.eventDetails && !state.hasNavigated) {
-          // Handle navigation to event details when showallorgevents is triggered
-
-          NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen);
-        }*/
-      },
-      child: BlocSelector<EventListBloc, VfEventListScreenState,
-          VfEventListModel?>(
-        selector: (state) => state.vfEventListModelObj,
-        builder: (context, vfEventListModelObj) {
-          return ListView.builder(
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount:
-                vfEventListModelObj?.upcomingeventslistItemList.length ?? 0,
-            itemBuilder: (context, index) {
-              UpcomingeventslistItemModel model =
-                  vfEventListModelObj?.upcomingeventslistItemList[index] ??
-                      UpcomingeventslistItemModel();
-
-              return UpcomingeventslistItemWidget(
-                upcomingeventslistItemModelObj: model,
-                showMenu: userRole == "Volunteer" ? false : true,
-                onMenuSelected: (action, id) =>
-                    _handleMenuSelected(context, action, id, model),
-                onTap: () =>
-                    _handleListOnTap(context, model.id!, getUserRole(context)),
-
-                // Add trailing indicator based on approveMode
-                trailing: isApproveMode
-                    ? Icon(Icons.radio_button_unchecked,
-                        color: Colors.blueAccent, size: 24.0)
-                    : null,
-                onLongPress: () {
-                  // Handle long press
-                },
-                onDismissed: () {
-                  // Handle dismiss action
-                },
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  void _handleListOnTap(BuildContext context, String eventId, String userRole) {
+  void _handleListOnTap(BuildContext context, String eventId) {
     print('Event ID: ${eventId}');
 
-    // Trigger the event signup or event details action
-    final orgEventBloc = BlocProvider.of<orgVoluEventBloc>(context);
-    final orgEventState = orgEventBloc.state;
-
-    String prevstate = '';
-
-    // preserve the state
-    if (orgEventState.showalluserevents) {
-      prevstate = 'showalluserevents';
-    } else if (orgEventState.showallorgevents &&
-        getUserRole(context) == "Organization") {
-      prevstate = 'showallorgevents';
-    } else if (orgEventState.approvehours) {
-      prevstate = 'approvehours';
-    } else if (orgEventState.manageEvents) {
-      prevstate = 'manageEvents';
-    } else if (orgEventState.eventDetails) {
-      prevstate = 'eventDetails';
-    }
-    print('prevstate: ' + prevstate);
-
-    if (prevstate == '' && userRole == 'Volunteer') {
-      prevstate = 'showalluserevents';
-    }
     // Reset the state
-    // orgEventBloc.add(resetEvent());
+    BlocProvider.of<orgVoluEventBloc>(context).add(resetEvent());
 
     final upcomingEventsList =
         BlocProvider.of<EventListBloc>(context).state.upcomingEventsList;
@@ -328,36 +223,9 @@ class VfEventListScreen extends StatelessWidget {
         ? upcomingEventsList.firstWhere((element) => element.eventId == eventId)
         : null;
 
-    if (prevstate == 'showalluserevents') {
-      context.read<orgVoluEventBloc>().add(eventsignupEvent(eventId));
-    } else if (prevstate == 'showallorgevents' &&
-        getUserRole(context) == "Organization") {
-      context
-          .read<orgVoluEventBloc>()
-          .add(eventdetailsEvent(eventId, selectedEvent!));
-    } else if (prevstate == 'approvehours') {
-      // Fetch the shift IDs
-      final shiftid1 = selectedEvent?.shifts[0].shiftId ?? '';
-      final shiftid2 = selectedEvent?.shifts[1].shiftId ?? '';
-
-      // Dispatch the event to the Bloc
-      if (selectedEvent != null) {
-        context
-            .read<orgVoluEventBloc>()
-            .add(approvehoursEvent(eventId, shiftid1, shiftid2, selectedEvent));
-      } else {
-        // Handle the case where selectedEvent is null
-        print('Selected event is null');
-      }
-    } else if (prevstate == 'manageEvents') {
-      context
-          .read<orgVoluEventBloc>()
-          .add(eventdetailsEvent(eventId, selectedEvent!));
-    } else if (prevstate == 'eventDetails') {
-      context
-          .read<orgVoluEventBloc>()
-          .add(eventdetailsEvent(eventId, selectedEvent!));
-    }
+    context
+        .read<orgVoluEventBloc>()
+        .add(eventdetailsEvent(eventId, selectedEvent!));
   }
 
   /// Handles the selection of menu actions on an event item
@@ -434,90 +302,6 @@ class VfEventListScreen extends StatelessWidget {
           },
         );
       },
-    );
-  }
-
-  void resetEventInitializationFlags(BuildContext context) {
-    // Access the bloc for VfCreateeventscreen1EventdetailsBloc
-    print('Resetting event initialization flags');
-    final eventDetailsBloc1 =
-        BlocProvider.of<VfCreateeventscreen1EventdetailsBloc>(context);
-    // Emit state with isInitialized set to false
-    eventDetailsBloc1
-        .add(VfCreateeventscreen1EventdetailsResetInitializationEvent());
-
-    // Access the bloc for VfCreateeventscreen2EventdetailsBloc
-    final eventDetailsBloc2 =
-        BlocProvider.of<VfCreateeventscreen2EventshiftsBloc>(context);
-    // Emit state with isInitialized set to false
-    eventDetailsBloc2.add(VfCreateeventscreen2ShiftsResetInitializationEvent());
-
-    // Access the bloc for VfCreateeventscreen3EventadditionaldetailsBloc
-    final eventDetailsBloc3 =
-        BlocProvider.of<VfCreateeventscreen3EventadditionaldetailsBloc>(
-            context);
-    // Emit state with isInitialized set to false
-    eventDetailsBloc3.add(
-        VfCreateeventscreen3EventadditionaldetailsResetInitializationEvent());
-  }
-
-  Widget _buildApproveEventList(BuildContext context, bool isApproveMode) {
-    return BlocListener<orgVoluEventBloc, orgVoluEventState>(
-      listener: (context, state) {
-        // Check if the current state is the initial state and exit if so
-        if (state == orgVoluEventState.initial) return;
-        if (state.hasNavigated) return;
-        // Check if the event approval was successful
-        if (state.approvehours &&
-            state.eventId.isNotEmpty &&
-            state.shiftId1.isNotEmpty &&
-            state.shiftId2.isNotEmpty) {
-          // Navigate to the Approve Hours screen once the event processing is complete
-          print(" I am here listner");
-          NavigatorService.pushNamed(AppRoutes.vfApprovehoursscreenScreen);
-        }
-      },
-      child: BlocSelector<EventListBloc, VfEventListScreenState,
-          VfEventListModel?>(
-        selector: (state) => state.vfEventListModelObj,
-        builder: (context, vfEventListModelObj) {
-          if (vfEventListModelObj == null ||
-              vfEventListModelObj.upcomingeventslistItemList.isEmpty) {
-            return Center(
-                child: CircularProgressIndicator()); // Loading indicator
-          }
-          return ListView.builder(
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount:
-                vfEventListModelObj?.upcomingeventslistItemList.length ?? 0,
-            itemBuilder: (context, index) {
-              UpcomingeventslistItemModel model =
-                  vfEventListModelObj?.upcomingeventslistItemList[index] ??
-                      UpcomingeventslistItemModel();
-
-              return UpcomingeventslistItemWidget(
-                upcomingeventslistItemModelObj: model,
-                onMenuSelected: (p0, p1) => {},
-                onTap: () =>
-                    _handleListOnTap(context, model.id!, getUserId(context)),
-                // Add trailing indicator based on approveMode
-                trailing: isApproveMode
-                    ? Icon(Icons.radio_button_unchecked,
-                        color: Colors.blueAccent, size: 24.0)
-                    : null,
-                onLongPress: () {
-                  // Handle long press
-                },
-                onDismissed: () {
-                  // Handle dismiss action
-                },
-              );
-            },
-          );
-        },
-      ),
     );
   }
 

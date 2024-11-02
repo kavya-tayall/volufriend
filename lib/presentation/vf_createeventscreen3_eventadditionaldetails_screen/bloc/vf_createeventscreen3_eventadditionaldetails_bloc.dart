@@ -28,6 +28,7 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
     on<UploadFileEvent>(_uploadFile);
     on<SaveEventAdditionalDetailsEvent>(_onSaveEventAdditionalDetails);
     on<SaveEventShiftstoDbEvent>(_onSaveEventShiftstoDb);
+    on<StartSaveInProgressEvent>(_onStartSaveInProgress);
     on<VfCreateeventscreen3EventadditionaldetailsResetInitializationEvent>(
         _resetInitialization);
   }
@@ -39,29 +40,30 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
     emit(VfCreateeventscreen3EventadditionaldetailsState());
   }
 
+  void _onStartSaveInProgress(
+    StartSaveInProgressEvent event,
+    Emitter<VfCreateeventscreen3EventadditionaldetailsState> emit,
+  ) {
+    // Set isSaveInProgress to true
+    emit(state.copyWith(isSaveInProgress: true));
+  }
+
   void _onSaveEventAdditionalDetails(
     SaveEventAdditionalDetailsEvent event,
     Emitter<VfCreateeventscreen3EventadditionaldetailsState> emit,
   ) {
-    // Update the state with the new values
-    emit(state.copyWith(isSaving: true, isSaved: false // Mark as saving
-        ));
+    // Prevent saving if a save is already in progress
+    if (state.isSaveInProgress) return;
 
-    // Access the current state directly to get the TextEditingController values
-    final EventDescription =
-        state.additionalDetailsTextAreaController?.text ?? '';
-    final coordinatorEmailInput =
-        state.coordinatorEmailInputController?.text ?? '';
-    final coordinatorNameInput =
-        state.coordinatorNameInputController?.text ?? '';
-    final coordinatorPhoneInput =
-        state.coordinatorPhoneInputController?.text ?? '';
+    // Dispatch the StartSaveInProgressEvent to indicate save is starting
+    add(StartSaveInProgressEvent());
 
-    // Use the variables here or remove them if not needed
-    print(EventDescription);
-    print(coordinatorEmailInput);
-    print(coordinatorNameInput);
-    print(coordinatorPhoneInput);
+    emit(state.copyWith(isSaving: true, isSaved: false));
+
+    final EventDescription = state.additionalDetailsTextAreaController.text;
+    final coordinatorEmailInput = state.coordinatorEmailInputController.text;
+    final coordinatorNameInput = state.coordinatorNameInputController.text;
+    final coordinatorPhoneInput = state.coordinatorPhoneInputController.text;
 
     final Coordinator coordinator = Coordinator(
       name: coordinatorNameInput,
@@ -80,9 +82,7 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
                   ))
               .copyWith(
         description: EventDescription,
-        coordinator: coordinator ??
-            state.vfCreateeventscreen3EventadditionaldetailsModelObj
-                ?.coordinator,
+        coordinator: coordinator,
         eventId: state.eventId,
         eventAlbumId: state.eventAlbum?.albumId ?? '',
       ),
@@ -90,6 +90,7 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
       isSaving: false,
       isSavedtoDb: false,
       SaveDbIntent: event.saveIntentToDb,
+      isSaveInProgress: false, // Reset after processing
     ));
 
     // emit(ReadytoSavetoDb());
@@ -106,14 +107,13 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
       if (event.orgEvent.eventId == null || event.orgEvent.eventId!.isEmpty) {
         // Generate a random event ID and save if it doesn't exist
         print("Creating event to the database");
-        final orgEvent =
-            await vfcrudService.createEventDetailsWithShifts(event.orgEvent);
+        await vfcrudService.createEventDetailsWithShifts(
+            event.orgEvent, event.imageUrls);
       } else {
         // Save the event if the ID already exists
         print("Saving event to the database");
-
-        final orgEvent =
-            await vfcrudService.saveEventDetailsWithShifts(event.orgEvent);
+        await vfcrudService.saveEventDetailsWithShifts(
+            event.orgEvent, event.imageUrls);
       }
 
       // If successful, update the state
@@ -121,6 +121,7 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
         isSavedtoDb: true,
         isSaving: false,
         isSaved: true,
+        isSaveInProgress: false, // Reset after successful save
       ));
     } catch (error) {
       print("Failed to save event: $error");
@@ -129,6 +130,7 @@ class VfCreateeventscreen3EventadditionaldetailsBloc extends Bloc<
         isSaving: false,
         isSavedtoDb: false,
         errorMessage: 'Failed to save event. Please try again.',
+        isSaveInProgress: false, // Reset on failure
       ));
     }
   }

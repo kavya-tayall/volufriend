@@ -20,7 +20,8 @@ class VfApprovehoursscreenState extends Equatable {
   final String shift2Time;
   final List<Attendance> shift1Attendees;
   final List<Attendance> shift2Attendees;
-
+  final isSaving;
+  final String sucessMessage;
   // Added properties
   final bool isLoading; // For loader during async operations
   final String? errorMessage; // For error handling
@@ -55,6 +56,8 @@ class VfApprovehoursscreenState extends Equatable {
     // Added property
     this.shift1Time = '',
     this.shift2Time = '',
+    this.isSaving = false,
+    this.sucessMessage = '',
   });
 
   List<Attendance> getAttendeesForShift(String shiftId, int shiftIndex) {
@@ -94,6 +97,8 @@ class VfApprovehoursscreenState extends Equatable {
         shift2Time,
         shift1Attendees,
         shift2Attendees,
+        isSaving,
+        sucessMessage,
       ];
 
   /// CopyWith method to handle updates
@@ -123,6 +128,8 @@ class VfApprovehoursscreenState extends Equatable {
     String? errorMessage,
     List<Attendance>? selectedAttendees,
     int? selectedAttendeesCount,
+    bool? isSaving,
+    String? sucessMessage,
   }) {
     return VfApprovehoursscreenState(
       vfApprovehoursscreenModelObj:
@@ -150,6 +157,8 @@ class VfApprovehoursscreenState extends Equatable {
       selectedAttendees: selectedAttendees ?? this.selectedAttendees,
       selectedAttendeesCount:
           selectedAttendeesCount ?? this.selectedAttendeesCount,
+      isSaving: isSaving ?? this.isSaving,
+      sucessMessage: sucessMessage ?? this.sucessMessage,
     );
   }
 }

@@ -19,6 +19,19 @@ class VfEventdetailspageInitialEvent extends VfEventsdetailspageEvent {
   List<Object?> get props => [eventSelected];
 }
 
+class resetEventDetailPage extends VfEventsdetailspageEvent {}
+
+class CancelSingleEventEvent extends VfEventsdetailspageEvent {
+  final String eventId;
+  final bool notifyParticipants;
+
+  CancelSingleEventEvent(
+      {required this.eventId, required this.notifyParticipants});
+
+  @override
+  List<Object?> get props => [eventId, notifyParticipants];
+}
+
 /// Event to fetch event details.
 class FetchEventDetails extends VfEventsdetailspageEvent {
   final String eventId;

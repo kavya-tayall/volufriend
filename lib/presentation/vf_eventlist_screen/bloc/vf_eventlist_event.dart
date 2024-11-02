@@ -9,6 +9,8 @@ class VfEventListScreenEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class ResetEventListScreenEvent extends VfEventListScreenEvent {}
+
 /// Event to load the upcoming event list
 class LoadUpcomingEventListEvent extends VfEventListScreenEvent {
   final String? userId;
@@ -38,6 +40,16 @@ class EventListScreenInitialEvent extends VfEventListScreenEvent {
 
   @override
   List<Object?> get props => [userId, role];
+}
+
+class CancelEventEvent extends VfEventListScreenEvent {
+  final String eventId;
+  final bool notifyParticipants;
+
+  CancelEventEvent({required this.eventId, required this.notifyParticipants});
+
+  @override
+  List<Object?> get props => [eventId, notifyParticipants];
 }
 
 class LoadUpcomingInterestEventListEvent extends VfEventListScreenEvent {

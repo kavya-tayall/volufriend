@@ -4,40 +4,34 @@ class SearchPage extends StatelessWidget {
   final TextEditingController searchController = TextEditingController();
   final ValueNotifier<List<Map<String, String>>> filteredEventsNotifier =
       ValueNotifier<List<Map<String, String>>>([]);
+  final ValueNotifier<String?> selectedCauseNotifier =
+      ValueNotifier<String?>(null); // Use ValueNotifier for selectedCause
 
-  final List<String> socialCauses; // Now passed as a parameter
-  final List<Map<String, String>> allEvents; // Now passed as a parameter
-
-  // Callback for handling taps
+  final List<String> socialCauses;
+  final List<Map<String, String>> allEvents;
   final void Function(Map<String, String> event)? onEventTap;
 
-  // Constructor accepts the lists of social causes and events
   SearchPage({
     Key? key,
-    required this.socialCauses, // Required parameter for social causes
-    required this.allEvents, // Required parameter for event list
+    required this.socialCauses,
+    required this.allEvents,
     this.onEventTap,
   }) : super(key: key);
 
-  // Function to filter events based on the search query
+  // Combined filtering function for search query and selected cause
   void filterEvents(String query) {
-    if (query.isEmpty) {
-      filteredEventsNotifier.value = allEvents;
-    } else {
-      filteredEventsNotifier.value = allEvents
-          .where((event) =>
-              event['title']!.toLowerCase().contains(query.toLowerCase()) ||
-              event['cause']!.toLowerCase().contains(query.toLowerCase()) ||
-              event['org_name']!.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    }
-  }
+    filteredEventsNotifier.value = allEvents.where((event) {
+      final matchesQuery = query.isEmpty ||
+          event['title']!.toLowerCase().contains(query.toLowerCase()) ||
+          event['cause']!.toLowerCase().contains(query.toLowerCase()) ||
+          event['org_name']!.toLowerCase().contains(query.toLowerCase());
 
-  // Function to filter by cause
-  void filterByCause(String cause) {
-    filteredEventsNotifier.value = allEvents
-        .where((event) => event['cause']!.toLowerCase() == cause.toLowerCase())
-        .toList();
+      final matchesCause = selectedCauseNotifier.value == null ||
+          event['cause']!.toLowerCase() ==
+              selectedCauseNotifier.value!.toLowerCase();
+
+      return matchesQuery && matchesCause;
+    }).toList();
   }
 
   @override
@@ -57,11 +51,10 @@ class SearchPage extends StatelessWidget {
           'Search Events',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor:
-            const Color(0XFF0070BB), // Match your app's primary color
+        backgroundColor: const Color(0XFF0070BB),
         centerTitle: true,
         elevation: 4.0,
-        toolbarHeight: 70, // Adjust the height as needed
+        toolbarHeight: 70,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -84,35 +77,60 @@ class SearchPage extends StatelessWidget {
                 prefixIcon: Icon(Icons.search, color: const Color(0XFF0070BB)),
               ),
               onChanged: (query) {
-                // Filter events as user types in search
                 filterEvents(query);
               },
             ),
             SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Filter by social cause',
-                  labelStyle: TextStyle(color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey),
+            Container(
+              width: double.infinity,
+              child: Row(
+                children: [
+                  Flexible(
+                    child: ValueListenableBuilder<String?>(
+                      valueListenable: selectedCauseNotifier,
+                      builder: (context, selectedCause, child) {
+                        return DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'Filter by social cause',
+                            labelStyle: TextStyle(color: Colors.grey),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                          ),
+                          dropdownColor: Colors.white,
+                          style: TextStyle(color: Colors.black),
+                          items: socialCauses.map((String cause) {
+                            return DropdownMenuItem<String>(
+                              value: cause,
+                              child: Text(cause),
+                            );
+                          }).toList(),
+                          onChanged: (newCause) {
+                            selectedCauseNotifier.value = newCause;
+                            filterEvents(searchController.text);
+                          },
+                          value: selectedCauseNotifier.value,
+                        );
+                      },
+                    ),
                   ),
-                ),
-                dropdownColor: Colors.white,
-                style: TextStyle(color: Colors.black),
-                items: socialCauses.map((String cause) {
-                  return DropdownMenuItem<String>(
-                    value: cause,
-                    child: Text(cause),
-                  );
-                }).toList(),
-                onChanged: (selectedCause) {
-                  if (selectedCause != null) {
-                    filterByCause(selectedCause); // Adjust filtering logic
-                  }
-                },
+                  // Show clear icon only when there's a valid selection
+                  ValueListenableBuilder<String?>(
+                    valueListenable: selectedCauseNotifier,
+                    builder: (context, selectedCause, child) {
+                      return selectedCause != null
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: Colors.grey),
+                              onPressed: () {
+                                selectedCauseNotifier.value = null;
+                                filterEvents(searchController.text);
+                              },
+                            )
+                          : Container();
+                    },
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 16),
@@ -135,7 +153,6 @@ class SearchPage extends StatelessWidget {
                         return GestureDetector(
                           onTap: () {
                             if (onEventTap != null) {
-                              // Pass the selected event map to the callback
                               onEventTap!(event);
                             }
                           },

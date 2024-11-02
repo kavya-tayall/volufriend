@@ -17,8 +17,18 @@ class VfEventsdetailspageBloc
   }) : super(initialState) {
     on<VfEventdetailspageInitialEvent>(_onInitialize);
     on<ToggleContactInfoEvent>(_toggleContactInfo);
-    on<SaveEventSignUp>(_saveEventSignUp);
     on<ToggleShiftSelectionEvent>(_toggleShiftSelection);
+    on<CancelSingleEventEvent>(_onCancelEventFromListEvent);
+    on<resetEventDetailPage>(_resetEventDetailPage);
+  }
+
+  void _resetEventDetailPage(
+    resetEventDetailPage event,
+    Emitter<VfEventsdetailspageState> emit,
+  ) {
+    print('ResetEvent received');
+    emit(VfEventsdetailspageState.initial); // Emit the initial state directly
+    print('State reset to initial');
   }
 
   void _toggleShiftSelection(
@@ -47,66 +57,24 @@ class VfEventsdetailspageBloc
     ));
   }
 
-  Future<void> _saveEventSignUp(
-    SaveEventSignUp event,
-    Emitter<VfEventsdetailspageState> emit,
-  ) async {
-    try {
-      // Prepare the JSON response
-      emit(state.copyWith(successMessage: ''));
-      final shifts = state.vfEventdetailsModelObj?.orgEvent?.shifts;
-      final eventSignupBody = {
-        'org_id': state.orgId,
-        'user_id': state.userId,
-        'event_id': state.eventId,
-        'selected_shift_ids': shifts
-                ?.asMap()
-                .entries
-                .where((entry) =>
-                    state.selectedShifts[entry.key]) // Filter selected shifts
-                .map((entry) => {
-                      'shift_id': entry.value.shiftId
-                    }) // Wrap shiftId in an object
-                .toList() ??
-            [],
-      };
-
-      // Print for debugging or log
-      print('Preparing JSON response: $eventSignupBody');
-
-      // Call repository to save the data
-      final statusCode =
-          await vfcrudService.saveEventSignUp(state.userId, eventSignupBody);
-
-      // Only emit a success state if the status code is 200
-      if (statusCode == 200) {
-        emit(state.copyWith(
-            successMessage: 'Event sign-up saved successfully.'));
-      } else {
-        // If the status is not 200, emit an error state
-        print('Failed to save event sign-up. Status code: $statusCode');
-      }
-    } catch (error) {
-      // Handle any errors and emit an error state
-      print('Error saving event sign-up: $error');
-      emit(state.copyWith(errorMessage: 'Failed to save event sign-up.'));
-    }
-  }
-
   Future<void> _onInitialize(
     VfEventdetailspageInitialEvent event,
     Emitter<VfEventsdetailspageState> emit,
   ) async {
     emit(state.copyWith(
+      isLoading: true,
+      cancelsucess: false,
       vfEventdetailsModelObj:
           state.vfEventdetailsModelObj?.copyWith(orgEvent: event.eventSelected),
     ));
 
+    print('Event ID in bloc: ${event.eventSelected.eventId}');
     // Assuming you have access to the fetched shifts here
     List<Shift> shifts = state.vfEventdetailsModelObj?.orgEvent?.shifts ?? [];
-
+    print('In the event detail page bloc');
     // Initialize the selectedShifts list based on the number of shifts
     emit(state.copyWith(
+      isLoading: false, cancelsucess: false,
       // Add orgId, userId, and eventId to the state
       selectedShifts: List<bool>.filled(shifts.length, false), // Initialize
     ));
@@ -121,5 +89,37 @@ class VfEventsdetailspageBloc
     emit(state.copyWith(
       showContactInfo: !currentState,
     ));
+  }
+
+  _onCancelEventFromListEvent(
+    CancelSingleEventEvent event,
+    Emitter<VfEventsdetailspageState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true)); // Start loading state
+
+    try {
+      // Load upcoming event list data
+      final Voluevents updatedEventFromDb = await vfcrudService.cancelEvent(
+          eventId: event.eventId, notifyParticipants: event.notifyParticipants);
+
+      emit(state.copyWith(
+        cancelsucess: true,
+        successMessage:
+            'Event ${updatedEventFromDb.title} canceled successfully.',
+        isLoading: false,
+        vfEventdetailsModelObj: state.vfEventdetailsModelObj
+            ?.copyWith(orgEvent: updatedEventFromDb),
+      ));
+    } catch (error) {
+      // Handle errors and update state with error message
+      print('Error canceling event: $error');
+      emit(state.copyWith(
+        isLoading: false,
+        cancelsucess: false,
+        errorMessage: 'Failed to cancel event: $error',
+      ));
+    } finally {
+      emit(state.copyWith(isLoading: false)); // Stop loading state
+    }
   }
 }

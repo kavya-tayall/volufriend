@@ -15,8 +15,6 @@ class EventTile extends StatelessWidget {
   final DateTime? shift2EndTime;
   final bool isSelected;
   final bool isFirstRow;
-
-  // New callback function to handle withdraw action
   final Function()? onWithdraw;
 
   EventTile({
@@ -32,7 +30,7 @@ class EventTile extends StatelessWidget {
     this.shift2EndTime,
     this.isSelected = false,
     this.isFirstRow = false,
-    this.onWithdraw, // Add this to the constructor
+    this.onWithdraw,
   }) : super(key: key);
 
   @override
@@ -44,15 +42,15 @@ class EventTile extends StatelessWidget {
         _foldingCellKey.currentState?.toggleFold();
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 12.0),
         child: SimpleFoldingCell.create(
           key: _foldingCellKey,
           frontWidget: _buildFrontWidget(context, _foldingCellKey),
           innerWidget: _buildInnerWidget(context, _foldingCellKey),
-          cellSize: Size(MediaQuery.of(context).size.width, 130),
-          padding: const EdgeInsets.all(10),
+          cellSize: Size(MediaQuery.of(context).size.width, 110),
+          padding: const EdgeInsets.all(8),
           animationDuration: const Duration(milliseconds: 300),
-          borderRadius: 12,
+          borderRadius: 10,
         ),
       ),
     );
@@ -66,66 +64,67 @@ class EventTile extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           color: isFirstRow ? Theme.of(context).primaryColor : Colors.white,
           boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 8, spreadRadius: 2),
+            BoxShadow(color: Colors.black12, blurRadius: 6, spreadRadius: 1),
           ],
         ),
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (isFirstRow)
               Text(
                 "Your next volunteering event is",
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
-            if (isFirstRow) const SizedBox(height: 4.0),
+            if (isFirstRow) const SizedBox(height: 2.0),
             Text(
               eventName,
               style: TextStyle(
                 color: isFirstRow ? Colors.white : Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 10.0),
+            const SizedBox(height: 6.0),
             Row(
               children: [
                 Icon(
-                  Icons.calendar_today,
-                  size: 18,
-                  color: isFirstRow ? Colors.white : Colors.black,
+                  Icons.calendar_today_outlined,
+                  size: 14,
+                  color: isFirstRow ? Colors.white70 : Colors.grey[700],
                 ),
-                const SizedBox(width: 5),
-                Expanded(
+                const SizedBox(width: 4),
+                Flexible(
                   child: Text(
                     _formatDate(eventDate),
                     style: TextStyle(
-                      fontSize: 16,
-                      color: isFirstRow ? Colors.white : Colors.black,
+                      fontSize: 12,
+                      color: isFirstRow ? Colors.white70 : Colors.grey[700],
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8.0),
+            const SizedBox(height: 6.0),
             Row(
               children: [
                 Icon(
-                  Icons.location_on,
-                  size: 18,
-                  color: isFirstRow ? Colors.white : Colors.black,
+                  Icons.location_pin,
+                  size: 14,
+                  color: isFirstRow ? Colors.white70 : Colors.grey[700],
                 ),
-                const SizedBox(width: 5),
-                Expanded(
+                const SizedBox(width: 4),
+                Flexible(
                   child: Text(
                     location,
                     style: TextStyle(
-                      fontSize: 16,
-                      color: isFirstRow ? Colors.white : Colors.black,
+                      fontSize: 12,
+                      color: isFirstRow ? Colors.white70 : Colors.grey[700],
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -146,74 +145,77 @@ class EventTile extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           color: Colors.white,
           boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 8, spreadRadius: 2),
+            BoxShadow(color: Colors.black12, blurRadius: 6, spreadRadius: 1),
           ],
         ),
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(Icons.access_time, size: 18, color: Colors.black),
-                const SizedBox(width: 5),
-                Expanded(
+                Icon(Icons.access_time, size: 14, color: Colors.teal),
+                const SizedBox(width: 4),
+                Flexible(
                   child: Text(
                     '$shift1Name: ${_formatTime(shift1StartTime)} - ${_formatTime(shift1EndTime)}',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 12, color: Colors.black87),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8.0),
+            const SizedBox(height: 6.0),
             if (shift2Name != null &&
                 shift2StartTime != null &&
                 shift2EndTime != null)
               Row(
                 children: [
-                  const Icon(Icons.access_time, size: 18, color: Colors.black),
-                  const SizedBox(width: 5),
-                  Expanded(
+                  Icon(Icons.access_time, size: 14, color: Colors.teal),
+                  const SizedBox(width: 4),
+                  Flexible(
                     child: Text(
                       '$shift2Name: ${_formatTime(shift2StartTime!)} - ${_formatTime(shift2EndTime!)}',
-                      style: const TextStyle(fontSize: 16),
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black87),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-            const SizedBox(height: 12.0),
+            const SizedBox(height: 10.0),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Flexible(
+                Expanded(
                   child: CustomElevatedButton(
                     text: "Withdraw",
                     onPressed: onWithdraw, // Use the passed callback
                     buttonStyle: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
+                      backgroundColor: Colors.redAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Flexible(
+                const SizedBox(width: 6),
+                Expanded(
                   child: CustomElevatedButton(
                     text: "Edit",
                     onPressed: () {
                       cellKey.currentState?.toggleFold(); // Close after action
                     },
                     buttonStyle: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.blueAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                     ),
                   ),
                 ),
@@ -226,7 +228,7 @@ class EventTile extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    final DateFormat formatter = DateFormat('EEEE, MMMM d');
+    final DateFormat formatter = DateFormat('EEE, MMM d');
     return formatter.format(date);
   }
 

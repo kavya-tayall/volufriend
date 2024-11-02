@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import 'package:volufriend/core/utils/size_utils.dart';
 import 'package:volufriend/crud_repository/volufriend_crud_repo.dart';
+import 'package:volufriend/widgets/vf_app_bar_with_title_back_button.dart';
 import 'bloc/vf_myupcomingeventscreen_bloc.dart';
 import 'models/vf_myupcomingeventscreen_model.dart';
 import '../../auth/bloc/login_user_bloc.dart';
@@ -57,7 +58,12 @@ class VfMyupcomingeventscreenScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        appBar: _buildAppBar(context),
+        appBar: VfAppBarWithTitleBackButton(
+          title: "My Upcoming Events",
+          showFilterIcon: false,
+          showSearchIcon: false,
+          onBackPressed: () => Navigator.of(context).pop(),
+        ),
         body: Container(
           width: double.maxFinite,
           margin: EdgeInsets.only(top: 14.h),
@@ -126,38 +132,18 @@ class VfMyupcomingeventscreenScreen extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: Text('My Upcoming Events',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18.h,
-          )),
-      elevation: 4,
-      backgroundColor: Colors.teal,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications),
-          onPressed: () {
-            // Handle notifications
-          },
-        ),
-      ],
-    );
-  }
-
   void _showWithdrawConfirmationDialog(BuildContext context, String eventName) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16), // Rounded corners
+            borderRadius: BorderRadius.circular(16),
           ),
           title: Row(
             children: const [
               Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              SizedBox(width: 10), // Spacing between icon and text
+              SizedBox(width: 10),
               Text('Withdraw from Event'),
             ],
           ),
@@ -165,34 +151,31 @@ class VfMyupcomingeventscreenScreen extends StatelessWidget {
             'Are you sure you want to withdraw from "$eventName"? Your spot will be released, and you won’t be able to attend this event.',
             style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
-          actionsPadding:
-              const EdgeInsets.all(12), // Padding around the buttons
+          actionsPadding: const EdgeInsets.all(12),
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text(
                 'No, Keep My Spot',
                 style: TextStyle(
-                  color: Colors.green, // Positive action color
+                  color: Colors.green,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent, // Danger action color
+                backgroundColor: Colors.redAccent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Rounded button
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8), // Padding inside the button
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-                // Call your BLoC or method to withdraw from the event
-                // context.read<VfMyupcomingeventscreenBloc>().add(WithdrawEvent(eventId));
+                Navigator.of(context).pop();
               },
               child: const Text(
                 'Yes, Withdraw',

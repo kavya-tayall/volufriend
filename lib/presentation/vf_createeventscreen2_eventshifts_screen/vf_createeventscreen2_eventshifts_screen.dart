@@ -1,64 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:volufriend/presentation/vf_createeventscreen1_eventdetails_screen/vf_createeventscreen1_eventdetails_screen.dart';
 import '../../core/app_export.dart';
-import '../../widgets/app_bar/appbar_leading_image.dart';
-import '../../widgets/app_bar/appbar_title.dart';
-import '../../widgets/app_bar/appbar_trailing_image.dart';
-import '../../widgets/app_bar/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
+
 import '../../widgets/custom_elevated_button.dart';
 import '../../widgets/custom_floating_text_field.dart';
-import '../../widgets/custom_icon_button.dart';
-import '../vf_homescreen_page/vf_homescreen_page.dart';
-import 'bloc/vf_createeventscreen2_eventshifts_bloc.dart';
-import 'models/vf_createeventscreen2_eventshifts_model.dart';
-import '../../presentation/vf_createeventscreen1_eventdetails_screen/bloc/vf_createeventscreen1_eventdetails_bloc.dart';
-import '../../presentation/vf_createeventscreen1_eventdetails_screen/models/vf_createeventscreen1_eventdetails_model.dart';
-import '/crud_repository/volufriend_crud_repo.dart';
-import '../../auth/bloc/login_user_bloc.dart';
-import 'package:multi_dropdown/multi_dropdown.dart';
-import '../vf_homescreen_container_screen/bloc/vf_homescreen_container_bloc.dart';
 
-// ignore_for_file: must_be_immutable
+import 'bloc/vf_createeventscreen2_eventshifts_bloc.dart';
+
+import '../../presentation/vf_createeventscreen1_eventdetails_screen/bloc/vf_createeventscreen1_eventdetails_bloc.dart';
+
+import 'package:volufriend/widgets/vf_app_bar_with_title_back_button.dart';
+
 class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
   VfCreateeventscreen2EventshiftsScreen({Key? key}) : super(key: key);
 
-  GlobalKey<NavigatorState> navigatorKey = GlobalKey();
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey();
 
   static Widget builder(BuildContext context) {
-    print('Current context from shift: $context');
-    // Access Event details from the first Bloc
     final EventBloc =
         BlocProvider.of<VfCreateeventscreen1EventdetailsBloc>(context);
     final EventState = EventBloc.state;
-
     final orgEvent =
         EventState.vfCreateeventscreen1EventdetailsModelObj?.orgEvent;
-    // print('Orgstate from shift: $orgEvent');
-
-    // Check if the VfCreateeventscreen2EventshiftsBloc is already provided
     final existingBloc = BlocProvider.of<VfCreateeventscreen2EventshiftsBloc>(
         context,
         listen: false);
-    print('ExistingBloc: $existingBloc');
-    // If an existing Bloc is not found, create a new one
-    if (existingBloc != null) {
-      // Dispatch the initial event if the Bloc already exists
-      existingBloc
-          .add(VfCreateeventscreen2EventshiftsInitialEvent(orgEvent: orgEvent));
-      return BlocProvider.value(
-        value: existingBloc,
-        child: VfCreateeventscreen2EventshiftsScreen(),
-      );
-    } else {
-      // Create a new BlocProvider if one does not exist
-      return BlocProvider<VfCreateeventscreen2EventshiftsBloc>(
-        create: (context) => VfCreateeventscreen2EventshiftsBloc(
-          vfcrudService: VolufriendCrudService(),
-        )..add(VfCreateeventscreen2EventshiftsInitialEvent(orgEvent: orgEvent)),
-        child: VfCreateeventscreen2EventshiftsScreen(),
-      );
-    }
+
+    existingBloc
+        .add(VfCreateeventscreen2EventshiftsInitialEvent(orgEvent: orgEvent));
+    return BlocProvider.value(
+      value: existingBloc,
+      child: VfCreateeventscreen2EventshiftsScreen(),
+    );
   }
 
   @override
@@ -69,78 +41,75 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
         return SafeArea(
           child: Scaffold(
             resizeToAvoidBottomInset: false,
-            appBar: AppBar(
-              title: const Text("Manage Event Shifts"),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              elevation: 0, // Remove shadow for a cleaner look
+            appBar: VfAppBarWithTitleBackButton(
+              title: "Create Event - Shifts",
+              showSearchIcon: false,
+              showFilterIcon: false,
+              onBackPressed: () {
+                Navigator.of(context).pop();
+              },
             ),
             body: SingleChildScrollView(
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 24.h),
-                decoration: AppDecoration.fillBlueGray,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 16.h),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Main Container for Shift Details
                     Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 16.h, vertical: 16.h),
-                      decoration: AppDecoration.fillGray,
+                      padding: EdgeInsets.all(16.h),
+                      decoration: AppDecoration.fillGray.copyWith(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Shift 1 Details
                           Text(
                             "lbl_shift_1".tr,
                             style: CustomTextStyles.titleSmallBlack900_1,
                           ),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: 12.h),
                           _buildShift1Details(context),
                           SizedBox(height: 24.h),
-
-                          // Shift 2 Details
                           Text(
                             "lbl_shift_2".tr,
                             style: CustomTextStyles.titleSmallBlack900_1,
                           ),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: 12.h),
                           _buildShift2Details(context),
                         ],
                       ),
                     ),
-                    SizedBox(height: 24.h), // Consistent spacing
                   ],
                 ),
               ),
             ),
             bottomNavigationBar: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 16.h, vertical: 16.h),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  CustomElevatedButton(
-                    onPressed: () {
-                      context.read<VfCreateeventscreen2EventshiftsBloc>().add(
-                            SaveShiftDetailsEvent(),
-                          );
-                      NavigatorService.pushNamed(
-                          AppRoutes.vfCreateeventscreen1EventdetailsScreen);
-                    },
-                    text: "lbl_prev".tr,
-                    width: 120.h,
+                  Expanded(
+                    child: CustomElevatedButton(
+                      onPressed: () {
+                        context
+                            .read<VfCreateeventscreen2EventshiftsBloc>()
+                            .add(SaveShiftDetailsEvent());
+                        NavigatorService.pushNamed(
+                            AppRoutes.vfCreateeventscreen1EventdetailsScreen);
+                      },
+                      text: "lbl_prev".tr,
+                    ),
                   ),
-                  CustomElevatedButton(
-                    onPressed: () {
-                      context.read<VfCreateeventscreen2EventshiftsBloc>().add(
-                            SaveShiftDetailsEvent(),
-                          );
-                      NavigatorService.pushNamed(AppRoutes
-                          .vfCreateeventscreen3EventadditionaldetailsScreen);
-                    },
-                    text: "lbl_next".tr,
-                    width: 120.h,
+                  SizedBox(width: 16.h), // Spacing between buttons
+                  Expanded(
+                    child: CustomElevatedButton(
+                      onPressed: () {
+                        context
+                            .read<VfCreateeventscreen2EventshiftsBloc>()
+                            .add(SaveShiftDetailsEvent());
+                        NavigatorService.pushNamed(AppRoutes
+                            .vfCreateeventscreen3EventadditionaldetailsScreen);
+                      },
+                      text: "lbl_next".tr,
+                    ),
                   ),
                 ],
               ),
@@ -151,37 +120,6 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      leadingWidth: 40.h,
-      leading: AppbarLeadingImage(
-        imagePath: ImageConstant.imgMegaphone,
-        margin: EdgeInsets.only(
-          left: 16.h,
-          top: 16.h,
-          bottom: 16.h,
-        ),
-      ),
-      centerTitle: true,
-      title: AppbarTitle(
-        text: "lbl_title".tr,
-      ),
-      actions: [
-        AppbarTrailingImage(
-          imagePath: ImageConstant.imgSearch,
-          margin: EdgeInsets.only(
-            top: 16.h,
-            right: 16.h,
-            bottom: 16.h,
-          ),
-        )
-      ],
-      styleType: Style.bgFill,
-    );
-  }
-
-  /// Section Widget: Shift 1 Activity Input
   Widget _buildShift1ActivityInput(BuildContext context) {
     return BlocSelector<VfCreateeventscreen2EventshiftsBloc,
         VfCreateeventscreen2EventshiftsState, TextEditingController?>(
@@ -189,11 +127,11 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
       builder: (context, shift1ActivityInputController) {
         return CustomFloatingTextField(
           controller: shift1ActivityInputController,
-          labelText: "lbl_shift_activity".tr,
+          labelText: "lbl_activity".tr,
           labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_shift_activity".tr,
-          contentPadding: EdgeInsets.all(16.h), // Uniform padding
-          filled: false,
+          hintText: "msg_activity".tr,
+          contentPadding:
+              EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.h),
         );
       },
     );
@@ -209,23 +147,20 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
             TimeOfDay? pickedTime = await showTimePicker(
               context: context,
               initialTime: TimeOfDay.now(),
-              builder: (BuildContext context, Widget? child) {
-                return MediaQuery(
-                  data: MediaQuery.of(context)
-                      .copyWith(alwaysUse24HourFormat: false),
-                  child: child!,
-                );
-              },
               initialEntryMode: TimePickerEntryMode.input,
+              builder: (context, child) {
+                return MediaQuery(
+                    data: MediaQuery.of(context)
+                        .copyWith(alwaysUse24HourFormat: false),
+                    child: child!);
+              },
             );
             if (pickedTime != null) {
-              // Simply format and set the selected time without any validation
-              final formatted24HourTime = pickedTime.format(context);
-
-              shift1StartTimeController?.text = formatted24HourTime;
-              context.read<VfCreateeventscreen2EventshiftsBloc>().add(
-                    UpdateShift1StartTimeEvent(starttime: formatted24HourTime),
-                  );
+              final formattedTime = pickedTime.format(context);
+              shift1StartTimeController?.text = formattedTime;
+              context
+                  .read<VfCreateeventscreen2EventshiftsBloc>()
+                  .add(UpdateShift1StartTimeEvent(starttime: formattedTime));
             }
           },
           child: AbsorbPointer(
@@ -235,7 +170,8 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
               labelText: "lbl_start_time".tr,
               labelStyle: theme.textTheme.bodyLarge!,
               hintText: "msg_start_time".tr,
-              contentPadding: EdgeInsets.all(16.h),
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.h),
             ),
           ),
         );
@@ -243,18 +179,55 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget: Shift 1 End Time
   Widget _buildShift1EndTime(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(left: 16.h), // Left padding only for separation
+      padding: EdgeInsets.only(left: 16.h),
       child: BlocSelector<VfCreateeventscreen2EventshiftsBloc,
           VfCreateeventscreen2EventshiftsState, TextEditingController?>(
         selector: (state) => state.shift1EndTimeController,
         builder: (context, shift1EndTimeController) {
           return GestureDetector(
-            onTap: () {
-              _selectShift1EndTime(context,
-                  shift1EndTimeController!); // Call the async function here
+            onTap: () async {
+              // Get the start time from the controller
+              String? startTimeText = context
+                  .read<VfCreateeventscreen2EventshiftsBloc>()
+                  .state
+                  .shift1StartTimeController
+                  ?.text;
+              TimeOfDay initialEndTime = TimeOfDay.now();
+
+              if (startTimeText != null && startTimeText.isNotEmpty) {
+                final startTime = TimeOfDay(
+                  hour: int.parse(startTimeText.split(":")[0]),
+                  minute: int.parse(startTimeText.split(":")[1].split(" ")[0]),
+                );
+                // Set the initial end time to be at least 30 minutes after start time
+                initialEndTime = TimeOfDay(
+                  hour: (startTime.hour + 1) % 24,
+                  minute: startTime.minute,
+                );
+              }
+
+              TimeOfDay? pickedTime = await showTimePicker(
+                context: context,
+                initialTime: initialEndTime,
+                builder: (BuildContext context, Widget? child) {
+                  return MediaQuery(
+                    data: MediaQuery.of(context)
+                        .copyWith(alwaysUse24HourFormat: false),
+                    child: child!,
+                  );
+                },
+                initialEntryMode: TimePickerEntryMode.input,
+              );
+
+              if (pickedTime != null) {
+                final formattedTime = pickedTime.format(context);
+                shift1EndTimeController?.text = formattedTime;
+                context
+                    .read<VfCreateeventscreen2EventshiftsBloc>()
+                    .add(UpdateShift1EndTimeEvent(endtime: formattedTime));
+              }
             },
             child: AbsorbPointer(
               child: CustomFloatingTextField(
@@ -263,37 +236,13 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
                 labelText: "lbl_end_time".tr,
                 labelStyle: Theme.of(context).textTheme.bodyLarge!,
                 hintText: "msg_end_time".tr,
-                contentPadding: EdgeInsets.all(16.h), // Uniform padding
+                contentPadding: EdgeInsets.all(16.h),
               ),
             ),
           );
         },
       ),
     );
-  }
-
-  void _selectShift1EndTime(BuildContext context,
-      TextEditingController shift1EndTimeController) async {
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-      builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-          child: child!,
-        );
-      },
-      initialEntryMode: TimePickerEntryMode.input,
-    );
-
-    if (pickedTime != null) {
-      // Simply format and set the selected time without checking for start time
-      final formatted24HourTime = pickedTime.format(context);
-      shift1EndTimeController?.text = formatted24HourTime;
-      context.read<VfCreateeventscreen2EventshiftsBloc>().add(
-            UpdateShift1EndTimeEvent(endtime: formatted24HourTime),
-          );
-    }
   }
 
   /// Section Widget: Shift 1 Max Participants
@@ -308,28 +257,8 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
           labelText: "lbl_max_participants".tr,
           labelStyle: theme.textTheme.bodyLarge!,
           hintText: "msg_max_participants".tr,
-          contentPadding: EdgeInsets.all(16.h), // Uniform padding
-          filled: false,
-        );
-      },
-    );
-  }
-
-  /// Section Widget: Shift 1 Minimum Age Input
-  Widget _buildShift1MinimumAgeInput(BuildContext context) {
-    return BlocSelector<VfCreateeventscreen2EventshiftsBloc,
-        VfCreateeventscreen2EventshiftsState, TextEditingController?>(
-      selector: (state) => state.shift1MinimumAgeController,
-      builder: (context, shift1MinimumAgeController) {
-        return CustomFloatingTextField(
-          width: 134.h,
-          controller: shift1MinimumAgeController,
-          labelText: "lbl_minimum_age".tr,
-          labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "msg_minimum_age".tr,
           contentPadding:
-              EdgeInsets.all(16.h), // Adjusted padding for consistency
-          filled: false,
+              EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.h),
         );
       },
     );
@@ -366,17 +295,37 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
     );
   }
 
+  /// Section Widget: Shift 1 Minimum Age Input
+  Widget _buildShift1MinimumAgeInput(BuildContext context) {
+    return BlocSelector<VfCreateeventscreen2EventshiftsBloc,
+        VfCreateeventscreen2EventshiftsState, TextEditingController?>(
+      selector: (state) => state.shift1MinimumAgeController,
+      builder: (context, shift1MinimumAgeController) {
+        return CustomFloatingTextField(
+          width: 134.h,
+          controller: shift1MinimumAgeController,
+          labelText: "lbl_minimum_age".tr,
+          labelStyle: theme.textTheme.bodyLarge!,
+          hintText: "msg_minimum_age".tr,
+          contentPadding:
+              EdgeInsets.all(16.h), // Adjusted padding for consistency
+          filled: false,
+        );
+      },
+    );
+  }
+
   /// Section Widget: Shift 2 Activity Input
   Widget _buildShift2ActivityInput(BuildContext context) {
     return BlocSelector<VfCreateeventscreen2EventshiftsBloc,
         VfCreateeventscreen2EventshiftsState, TextEditingController?>(
       selector: (state) => state.shift2ActivityInputController,
-      builder: (context, shift2ActivityInput1Controller) {
+      builder: (context, shift2ActivityInputController) {
         return CustomFloatingTextField(
-          controller: shift2ActivityInput1Controller,
+          controller: shift2ActivityInputController,
           labelText: "lbl_activity".tr,
           labelStyle: theme.textTheme.bodyLarge!,
-          hintText: "lbl_activity".tr,
+          hintText: "msg_activity".tr,
           contentPadding: EdgeInsets.all(16.h), // Uniform padding
           filled: false,
         );
@@ -384,12 +333,11 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget: Shift 2 Start Time
   Widget _buildShift2StartTime(BuildContext context) {
     return BlocSelector<VfCreateeventscreen2EventshiftsBloc,
         VfCreateeventscreen2EventshiftsState, TextEditingController?>(
       selector: (state) => state.shift2StartTimeController,
-      builder: (context, shift2StartTime1Controller) {
+      builder: (context, shift2StartTimeController) {
         return GestureDetector(
           onTap: () async {
             TimeOfDay? pickedTime = await showTimePicker(
@@ -405,21 +353,21 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
               initialEntryMode: TimePickerEntryMode.input,
             );
             if (pickedTime != null) {
-              final formattedTime = pickedTime.format(context);
-              shift2StartTime1Controller?.text = formattedTime;
+              final formatted24HourTime = pickedTime.format(context);
+              shift2StartTimeController?.text = formatted24HourTime;
               context.read<VfCreateeventscreen2EventshiftsBloc>().add(
-                    UpdateShift2StartTimeEvent(starttime: formattedTime),
+                    UpdateShift2StartTimeEvent(starttime: formatted24HourTime),
                   );
             }
           },
           child: AbsorbPointer(
             child: CustomFloatingTextField(
               width: 134.h,
-              controller: shift2StartTime1Controller,
+              controller: shift2StartTimeController,
               labelText: "lbl_start_time".tr,
               labelStyle: theme.textTheme.bodyLarge!,
-              hintText: "lbl_start_time".tr,
-              contentPadding: EdgeInsets.all(16.h), // Uniform padding
+              hintText: "msg_start_time".tr,
+              contentPadding: EdgeInsets.all(16.h),
             ),
           ),
         );
@@ -436,34 +384,16 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
         selector: (state) => state.shift2EndTimeController,
         builder: (context, shift2EndTimeController) {
           return GestureDetector(
-            onTap: () async {
-              TimeOfDay? pickedTime = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay.now(),
-                builder: (BuildContext context, Widget? child) {
-                  return MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(alwaysUse24HourFormat: false),
-                    child: child!,
-                  );
-                },
-                initialEntryMode: TimePickerEntryMode.input,
-              );
-              if (pickedTime != null) {
-                // Set the selected time without validation
-                final formattedTime = pickedTime.format(context);
-                shift2EndTimeController?.text = formattedTime;
-                context.read<VfCreateeventscreen2EventshiftsBloc>().add(
-                      UpdateShift2EndTimeEvent(endtime: formattedTime),
-                    );
-              }
+            onTap: () {
+              _selectShift2EndTime(context,
+                  shift2EndTimeController!); // Call the async function here
             },
             child: AbsorbPointer(
               child: CustomFloatingTextField(
                 width: 134.h,
                 controller: shift2EndTimeController,
                 labelText: "lbl_end_time".tr,
-                labelStyle: theme.textTheme.bodyLarge!,
+                labelStyle: Theme.of(context).textTheme.bodyLarge!,
                 hintText: "msg_end_time".tr,
                 contentPadding: EdgeInsets.all(16.h), // Uniform padding
               ),
@@ -474,16 +404,39 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
     );
   }
 
+  void _selectShift2EndTime(BuildContext context,
+      TextEditingController shift2EndTimeController) async {
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+          child: child!,
+        );
+      },
+      initialEntryMode: TimePickerEntryMode.input,
+    );
+
+    if (pickedTime != null) {
+      final formatted24HourTime = pickedTime.format(context);
+      shift2EndTimeController.text = formatted24HourTime;
+      context.read<VfCreateeventscreen2EventshiftsBloc>().add(
+            UpdateShift2EndTimeEvent(endtime: formatted24HourTime),
+          );
+    }
+  }
+
   /// Section Widget: Shift 2 Max Participants
   Widget _buildShift2MaxParticipants(BuildContext context) {
     return BlocSelector<VfCreateeventscreen2EventshiftsBloc,
         VfCreateeventscreen2EventshiftsState, TextEditingController?>(
       selector: (state) => state.shift2MaxParticipantsController,
-      builder: (context, shiftMax2Participants1Controller) {
+      builder: (context, shift2MaxParticipantsController) {
         return CustomFloatingTextField(
           width: 134.h,
-          controller: shiftMax2Participants1Controller,
-          labelText: "msg_max_participants".tr,
+          controller: shift2MaxParticipantsController,
+          labelText: "lbl_max_participants".tr,
           labelStyle: theme.textTheme.bodyLarge!,
           hintText: "msg_max_participants".tr,
           contentPadding: EdgeInsets.all(16.h), // Uniform padding
@@ -505,8 +458,7 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
           labelText: "lbl_minimum_age".tr,
           labelStyle: theme.textTheme.bodyLarge!,
           hintText: "msg_minimum_age".tr,
-          contentPadding:
-              EdgeInsets.all(16.h), // Adjusted padding for consistency
+          contentPadding: EdgeInsets.all(16.h), // Uniform padding
           filled: false,
         );
       },

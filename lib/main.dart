@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:io'; // Add this import for Directory
+import 'package:path/path.dart' as path; // Add this import for path operations
 import 'dart:async';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -31,6 +34,9 @@ import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import '../../presentation/vf_homescreen_page/bloc/event_search_bloc.dart';
 import '../../presentation/vf_homescreen_page/bloc/vf_lifecyclebloc.dart';
 import '../../presentation/vf_eventlist_screen/bloc/vf_eventlist_bloc.dart';
+import '../../presentation/vf_eventdetailspage_screen/models/vf_eventdetailspage_model.dart';
+import '../../presentation/vf_eventdetailspage_screen/bloc/vf_eventdetailspage_bloc.dart';
+import 'package:volufriend/core/utils/cause_cache_service.dart'; // Adjust path as needed
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -39,6 +45,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Ensure binding is initialized before using any Flutter widgets or services
   WidgetsFlutterBinding.ensureInitialized();
   LocalStorageService localLocalStorageService;
+
   // Initialize Firebase if not already done
   await Firebase.initializeApp();
 
@@ -85,26 +92,66 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure binding is initialized
+  // Ensure binding is initialized before any async code
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // Create the global instance of LocalStorageService with prefs
+  // Determine if the environment is production
+  const bool isProduction = bool.fromEnvironment('dart.vm.product');
+  print('isProduction: $isProduction');
+/*
+  // Try to load the correct .env file based on the environment
   try {
-    // Initialize global services
+    final directory = Directory.current.path;
+    print('Current directory: $directory');
+    final envFileName = isProduction ? ".env.production" : ".env";
+    print('envFileName: $envFileName');
+    final envFilePath = path.join(directory, envFileName);
+    print('envFilePath: $envFilePath');
+    await dotenv.load(fileName: envFilePath);
+    print('.env loaded: ' + dotenv.env['BASE_URL']!);
+    // Load the correct .env file based on environment (dev or production)
+    // await dotenv.load(fileName: isProduction ? ".env.production" : ".env");
+    //print('.env loaded: ' + dotenv.env['BASE_URL']!);
+  } catch (e) {
+    print('Error loading .env file1: $e');
+  }*/
+
+  // Initialize global services within try-catch block
+  try {
     await initGlobalServices();
   } catch (e) {
     print('Error initializing global services: $e');
   }
 
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Try to initialize Firebase with error handling
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print('Error initializing Firebase: $e');
+  }
 
+  // Create the global instance of VolufriendCrudService
   final vfcrudService = VolufriendCrudService();
 
-  // Register background handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Register the background message handler for Firebase Messaging
+  try {
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    print('Error registering Firebase background message handler: $e');
+  }
 
+  try {
+    // Preload causes data into cache
+    print('Preloading causes data into cache');
+    final causeCacheService = CauseCacheService();
+    await causeCacheService.getCauses();
+  } catch (e) {
+    print('Error preloading causes data: $e');
+  }
+
+  // Run the Flutter app with the initialized services
   runApp(MyApp(
     vfcrudService: vfcrudService,
     localStorageService: globalLocalStorageService!,
@@ -189,6 +236,13 @@ class MyApp extends StatelessWidget {
           BlocProvider<EventListBloc>(
               create: (context) =>
                   EventListBloc(VfEventListScreenState(), vfcrudService)),
+          BlocProvider<VfEventsdetailspageBloc>(
+              create: (context) => VfEventsdetailspageBloc(
+                    initialState: VfEventsdetailspageState(
+                        vfEventdetailsModelObj:
+                            const VfEventdetailspageModel()),
+                    vfcrudService: vfcrudService,
+                  )),
         ],
         child: MultiBlocListener(
           listeners: [
@@ -205,8 +259,10 @@ class MyApp extends StatelessWidget {
                   if (lifecycleBloc.userId != userId) {
                     lifecycleBloc.userId =
                         userId!; // Update userId in LifecycleBloc
-                    lifecycleBloc
-                        .fetchAndStoreNotifications(); // Fetch notifications after login
+                    if (userId.isNotEmpty) {
+                      lifecycleBloc
+                          .fetchAndStoreNotifications(); // Fetch notifications after login
+                    }
                   }
                 }
               },

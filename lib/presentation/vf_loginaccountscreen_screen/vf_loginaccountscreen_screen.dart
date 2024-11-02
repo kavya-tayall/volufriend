@@ -203,6 +203,7 @@ class VfLoginaccountscreenScreen extends StatelessWidget {
                   .text,
             );
             String? userId = userCredential.user?.uid;
+            print('userid: $userId');
 
             if (userId != null) {
               context.read<UserBloc>().add(LoginUserEvent(userId: userId));
@@ -226,9 +227,11 @@ class VfLoginaccountscreenScreen extends StatelessWidget {
               ),
             );
           } catch (e) {
+            print(e.toString());
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('An error occurred. Please try again.'),
+                content:
+                    Text('An error occurred. Please try again.' + e.toString()),
                 backgroundColor: Colors.redAccent,
               ),
             );

@@ -99,7 +99,6 @@ class VolufriendCrudService {
       if (eventData == null) {
         throw Exception('No event data found for event ID: $eventId');
       }
-      print('Event data: $data');
 
       // Parse the Voluevents object
       final Voluevents event = Voluevents.fromJson(data[eventId], eventId);
@@ -119,81 +118,46 @@ class VolufriendCrudService {
     }
   }
 
-  Future<void> createEventDetailsWithShifts(Voluevents orgEvent) async {
+  Future<void> createEventDetailsWithShifts(
+      Voluevents orgEvent, List<String>? imageUrls) async {
     try {
       // Convert the Voluevents object to a Map<String, dynamic>
-      final Map<String, dynamic> orgEventData = orgEvent.toJson();
-      print('Save event details with shifts for event orgEvent: $orgEventData');
+      Map<String, dynamic> orgEventData = orgEvent.toJson(imageUrls: imageUrls);
 
+      print('Save event details with shifts for event orgEvent: ');
+
+      // Send the data to the API endpoint
       final response = await VoluFriendDioClient.instance.post(
         '${Paths.eventsurl}/',
         data: orgEventData,
       );
-/*
-      // Assuming that Firebase returns the new ID in the response under the 'id' key
-      String eventId = response['id'];
-      if (eventId == null) {
-        throw Exception(
-            'Failed to retrieve the new event ID from the response');
-      }
 
-      print('Response: $response');
       // Check if the response data is not null
       if (response == null) {
         throw Exception('No data returned from the API.');
-      } */
-/*
-      // Cast the response to a Map<String, dynamic>
-      final Map<String, dynamic> data = response as Map<String, dynamic>;
-
-      // Check if the event ID is present in the response
-      if (!data.containsKey(eventId)) {
-        throw Exception('Event ID not found in the response.');
       }
 
-      // Access the event and shifts from the response
-      final Map<String, dynamic>? eventData =
-          data[eventId]?['event'] as Map<String, dynamic>?;
-      final List<dynamic>? shiftsData =
-          data[eventId]?['shifts'] as List<dynamic>?;
-
-      if (eventData == null) {
-        throw Exception('No event data found for event ID: $eventId');
-      }
-
-      print('Event data: $eventData');
-      // Parse the Voluevents object
-      final Voluevents event = Voluevents.fromJson(data[eventId], eventId);
-
-      // Parse the shifts and assign them to the event object
-      if (shiftsData != null) {
-        event.shifts = shiftsData.map((shift) {
-          return Shift.fromJson(shift as Map<String, dynamic>);
-        }).toList();
-      } else {
-        event.shifts = <Shift>[]; // Default to empty list if shiftsData is null
-      }
-       return event;*/
+      // Optional: Print or process the response if needed
     } catch (e) {
-      print('Error fetching event details: $e');
-      throw Exception('An error occurred: $e');
+      print('Error saving event details with shifts: $e');
+      throw Exception('An error occurred while saving event details: $e');
     }
   }
 
-  Future<void> saveEventDetailsWithShifts(Voluevents orgEvent) async {
+  Future<void> saveEventDetailsWithShifts(
+      Voluevents orgEvent, List<String>? imageUrls) async {
     try {
       String eventId = orgEvent.eventId;
       print('Updating event with ID: $eventId');
 
       // Convert the Voluevents object to a Map<String, dynamic>
-      final Map<String, dynamic> orgEventData = orgEvent.toJson();
-      print('Event data: $orgEventData');
+      final Map<String, dynamic> orgEventData =
+          orgEvent.toJson(imageUrls: imageUrls);
 
       final updateResponse = await VoluFriendDioClient.instance.put(
         '${Paths.eventsurl}/$eventId',
         data: orgEventData,
       );
-      print('Updated Response: $updateResponse');
     } catch (e) {
       print('Error updating event details: $e');
       throw Exception('An error occurred: $e');
@@ -343,6 +307,75 @@ class VolufriendCrudService {
       throw error.errorMessage;
     } catch (e) {
       print('General exception occurred in getUpcomingEventsforOrgUser: $e');
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<List<Voluevents>> getUpcomingEventsforOrgUserPageWise(
+    String orgUserId, {
+    DateTime? filterStartDate,
+    DateTime? filterEndDate,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    String apiUrl = Paths.orgupcomingeventsUrlPageWise;
+
+    // Start building query parameters
+    List<String> queryParams = [
+      'org_user_id=$orgUserId',
+      'page=$page',
+      'pageSize=$pageSize',
+    ];
+
+    // Append start_date if filterStartDate is provided
+    if (filterStartDate != null) {
+      String filterStartDateStr = filterStartDate.toIso8601String();
+      queryParams.add('start_date=$filterStartDateStr');
+    }
+
+    // Append end_date if filterEndDate is provided
+    if (filterEndDate != null) {
+      String filterEndDateStr = filterEndDate.toIso8601String();
+      queryParams.add('end_date=$filterEndDateStr');
+    }
+
+    // Construct the full API URL with query parameters
+    apiUrl = '$apiUrl?${queryParams.join('&')}';
+
+    print('Fetching paginated events list from URL: $apiUrl');
+
+    // Check if the URL starts with 'http://' or 'https://'
+    if (!(apiUrl.startsWith('http://') || apiUrl.startsWith('https://'))) {
+      throw Exception('Invalid URL format: $apiUrl');
+    }
+
+    try {
+      // Make the HTTP request using Dio client
+      final response = await VoluFriendDioClient.instance.get(apiUrl);
+      final Map<String, dynamic> data = response as Map<String, dynamic>;
+
+      // Extract events and pagination info from response data
+      final List<Voluevents> events = (data['events'] as Map<String, dynamic>)
+          .entries
+          .map((entry) => Voluevents.fromJson(entry.value, entry.key))
+          .toList();
+
+      // Optional: Parse pagination metadata if needed
+      final pagination = data['pagination'] ?? {};
+      final int totalPages = pagination['totalPages'] ?? 1;
+      final int totalEvents = pagination['totalEvents'] ?? 0;
+
+      print(
+          "Fetched ${events.length} events. Total pages: $totalPages, Total events: $totalEvents");
+
+      return events;
+    } on DioException catch (e) {
+      print(
+          'DioException in getUpcomingEventsforOrgUserPageWise: ${e.message}');
+      var error = DioErrors(e);
+      throw error.errorMessage;
+    } catch (e) {
+      print('Exception in getUpcomingEventsforOrgUserPageWise: $e');
       throw Exception('An error occurred: $e');
     }
   }
@@ -639,7 +672,7 @@ class VolufriendCrudService {
   }) async {
     final String url =
         Paths.userinterestevents; // Update this with your actual events URL
-    print('Fetching events list from URL: $url');
+    print('Fetching events list from URL: $url for user: $userId');
 
     // Check if the URL starts with 'http://' or 'https://'
     if (!(url.startsWith('http://') || url.startsWith('https://'))) {
@@ -835,7 +868,7 @@ class VolufriendCrudService {
 
     try {
       print(
-          'Sending FCM token: $token to URL: ${Paths.usersUrl}'); // Make sure to define Paths.storeTokenUrl
+          'Sending FCM token: $tokenData to URL: ${Paths.usersUrl}'); // Make sure to define Paths.storeTokenUrl
 
       final response = await VoluFriendDioClient.instance.put(
         '${Paths.usersUrl}/$userId', // Append the userId to the URL
@@ -1064,6 +1097,9 @@ class VolufriendCrudService {
 
   Future<List<NotificationModel>> getNotificationsList(String userId) async {
     try {
+      if (userId.isEmpty) {
+        return [];
+      }
       print(
           'Fetching getNotificationsList list from URL: ${Paths.messageUrl} for user: $userId');
 
