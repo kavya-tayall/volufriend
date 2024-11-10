@@ -49,7 +49,9 @@ class NotificationModel {
           ? (json['message'] ?? '')
           : '', // Check if 'message' exists and handle null
       isRead: json.containsKey('isRead')
-          ? (json['isRead'] ?? false)
+          ? (json['isRead'] is bool
+              ? json['isRead']
+              : false) // Check if 'isRead' is a boolean
           : false, // Check if 'isRead' exists and handle null
     );
   }
@@ -62,7 +64,9 @@ class NotificationModel {
       eventId: map['eventId'] ?? '',
       title: map['title'] ?? '',
       message: map['message'] ?? '',
-      isRead: map['isRead'] ?? false,
+      isRead: map['isRead'] is bool
+          ? map['isRead']
+          : false, // Check if 'isRead' is a boolean
     );
   }
 

@@ -336,6 +336,7 @@ class NotificationHandler {
   // Initialize Firebase Messaging and pass LocalStorageService
   void initFirebaseMessaging(
       BuildContext context, LocalStorageService localStorageService) {
+    print('initFirebaseMessaging');
     if (_isInitialized) {
       print("Firebase Messaging already initialized.");
       return; // Prevent re-initialization

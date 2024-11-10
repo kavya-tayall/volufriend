@@ -105,7 +105,13 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: VfAppBarWithTitleBackButton(
-          title: "Create Event",
+          title: context
+                      .read<VfCreateeventscreen1EventdetailsBloc>()
+                      .state
+                      .formContext ==
+                  "create"
+              ? "Create Event"
+              : "Edit Event",
           showSearchIcon: false,
           showFilterIcon: false,
           onBackPressed: () {
@@ -252,6 +258,18 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
   }
 
   /// Section Widget
+  Widget _buildDateRow(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildEventDateInput(context)),
+        SizedBox(width: 12.h), // Spacing between the two date inputs
+        Expanded(child: _buildRegistrationDeadlineInput(context)),
+      ],
+    );
+  }
+
+  /// Section Widget
   Widget _buildEventDateInput(BuildContext context) {
     return BlocSelector<VfCreateeventscreen1EventdetailsBloc,
         VfCreateeventscreen1EventdetailsState, TextEditingController?>(
@@ -291,20 +309,58 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget
-  Widget _buildDateRow(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: _buildEventDateInput(context)),
-        SizedBox(width: 12.h), // Spacing between the two date inputs
-        Expanded(child: _buildRegistrationDeadlineInput(context)),
-      ],
+  Future<void> onTapEventDateInput(BuildContext context) async {
+    var initialState =
+        BlocProvider.of<VfCreateeventscreen1EventdetailsBloc>(context).state;
+
+    DateTime now = DateTime.now();
+
+    DateTime oneYearFromNow = DateTime(now.year + 1, now.month, now.day);
+
+    DateTime? dateTime = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now, // Allow selection from today
+      lastDate: oneYearFromNow, // Allow selection up to one year from today
     );
+
+    if (dateTime != null) {
+      context
+          .read<VfCreateeventscreen1EventdetailsBloc>()
+          .add(ChangeEventDateEvent(date: dateTime));
+
+      // Update the text field with the selected date
+      initialState.eventDateInputController?.text =
+          dateTime.format(pattern: dateTimeFormatPattern);
+    }
   }
 
-  /// Section Widget
-  /// Section Widget
+  Future<void> onTapRegDateInput(BuildContext context) async {
+    var initialState =
+        BlocProvider.of<VfCreateeventscreen1EventdetailsBloc>(context).state;
+
+    DateTime now = DateTime.now();
+
+    DateTime oneYearFromNow = DateTime(now.year + 1, now.month, now.day);
+
+    DateTime? dateTime = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now, // Allow selection from today
+      lastDate: oneYearFromNow, // Allow selection up to one year from today
+    );
+
+    if (dateTime != null) {
+      context
+          .read<VfCreateeventscreen1EventdetailsBloc>()
+          .add(ChangeEventRegistrationByDateEvent(date: dateTime));
+
+      // Update the text field with the selected date
+      initialState.registrationDeadlineInputController?.text =
+          dateTime.format(pattern: dateTimeFormatPattern);
+    }
+  }
+
   /// Section Widget
   Widget _buildNextButton(BuildContext context) {
     return Padding(
@@ -355,60 +411,6 @@ class VfCreateeventscreen1EventdetailsScreen extends StatelessWidget {
         return VfHomescreenPage.builder(context);
       default:
         return DefaultWidget();
-    }
-  }
-
-  /// Displays a date picker dialog and updates the selected date in the
-  /// current [vfCreateeventscreen1EventdetailsModelObj] object if the user selects a valid date.
-  ///
-  /// This function returns a `Future` that completes with `void`.
-  Future<void> onTapEventDateInput(BuildContext context) async {
-    var initialState =
-        BlocProvider.of<VfCreateeventscreen1EventdetailsBloc>(context).state;
-
-    DateTime now = DateTime.now();
-    DateTime oneYearFromNow = DateTime(now.year + 1, now.month, now.day);
-
-    DateTime? dateTime = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: now, // Allow selection from today
-      lastDate: oneYearFromNow, // Allow selection up to one year from today
-    );
-
-    if (dateTime != null) {
-      context
-          .read<VfCreateeventscreen1EventdetailsBloc>()
-          .add(ChangeEventDateEvent(date: dateTime));
-
-      // Update the text field with the selected date
-      initialState.eventDateInputController?.text =
-          dateTime.format(pattern: dateTimeFormatPattern);
-    }
-  }
-
-  Future<void> onTapRegDateInput(BuildContext context) async {
-    var initialState =
-        BlocProvider.of<VfCreateeventscreen1EventdetailsBloc>(context).state;
-
-    DateTime now = DateTime.now();
-    DateTime oneYearFromNow = DateTime(now.year + 1, now.month, now.day);
-
-    DateTime? dateTime = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: now, // Allow selection from today
-      lastDate: oneYearFromNow, // Allow selection up to one year from today
-    );
-
-    if (dateTime != null) {
-      context
-          .read<VfCreateeventscreen1EventdetailsBloc>()
-          .add(ChangeEventRegistrationByDateEvent(date: dateTime));
-
-      // Update the text field with the selected date
-      initialState.registrationDeadlineInputController?.text =
-          dateTime.format(pattern: dateTimeFormatPattern);
     }
   }
 

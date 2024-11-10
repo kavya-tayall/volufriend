@@ -80,7 +80,13 @@ class VfCreateeventscreen3EventadditionaldetailsScreen extends StatelessWidget {
         child: Scaffold(
           resizeToAvoidBottomInset: false,
           appBar: VfAppBarWithTitleBackButton(
-            title: "Create Event - Additional Details",
+            title: context
+                        .read<VfCreateeventscreen1EventdetailsBloc>()
+                        .state
+                        .formContext ==
+                    "create"
+                ? "Create Event - Additional Details"
+                : "Edit Event - Additional Details",
             showSearchIcon: false,
             showFilterIcon: false,
             onBackPressed: () => Navigator.of(context).pop(),

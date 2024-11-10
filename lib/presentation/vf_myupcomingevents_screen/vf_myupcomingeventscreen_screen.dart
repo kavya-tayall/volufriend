@@ -78,6 +78,8 @@ class VfMyupcomingeventscreenScreen extends StatelessWidget {
                   builder: (context, state) {
                     if (state.isLoading) {
                       return const Center(child: CircularProgressIndicator());
+                    } else if (state.errorMessage.isNotEmpty) {
+                      return _buildEmptyState();
                     } else if (state.vfMyupcomingeventscreenModelObj?.orgEvent
                             ?.isNotEmpty ==
                         true) {

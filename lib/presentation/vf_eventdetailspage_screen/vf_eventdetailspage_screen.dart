@@ -8,6 +8,7 @@ import '../../crud_repository/volufriend_crud_repo.dart';
 import 'package:volufriend/auth/bloc/org_event_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../widgets/vf_app_bar_with_title_back_button.dart';
+import '../../presentation/vf_homescreen_page/navigation_helper.dart';
 
 class VfEventdetailspageScreen extends StatelessWidget {
   const VfEventdetailspageScreen({Key? key}) : super(key: key);
@@ -62,6 +63,8 @@ class VfEventdetailspageScreen extends StatelessWidget {
           appBar: VfAppBarWithTitleBackButton(
             title: 'Event Details',
             onBackPressed: () => Navigator.of(context).pop(),
+            showFilterIcon: false,
+            showSearchIcon: false,
           ),
           body: BlocSelector<VfEventsdetailspageBloc, VfEventsdetailspageState,
               VfEventdetailspageModel?>(
@@ -273,6 +276,8 @@ class VfEventdetailspageScreen extends StatelessWidget {
 
   void _handleMenuSelected(BuildContext context, String action,
       VfEventdetailspageModel? vfEventdetailsModelObj) {
+    NavigationHelper.endNavigation();
+
     final selectedEvent = vfEventdetailsModelObj?.orgEvent;
     final id = selectedEvent?.eventId ?? '';
     if (action == 'edit' && selectedEvent != null) {

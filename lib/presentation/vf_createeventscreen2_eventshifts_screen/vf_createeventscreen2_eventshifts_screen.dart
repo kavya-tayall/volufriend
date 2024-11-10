@@ -42,7 +42,13 @@ class VfCreateeventscreen2EventshiftsScreen extends StatelessWidget {
           child: Scaffold(
             resizeToAvoidBottomInset: false,
             appBar: VfAppBarWithTitleBackButton(
-              title: "Create Event - Shifts",
+              title: context
+                          .read<VfCreateeventscreen1EventdetailsBloc>()
+                          .state
+                          .formContext ==
+                      "create"
+                  ? "Create Event - Shifts"
+                  : "Edit Event - Shifts",
               showSearchIcon: false,
               showFilterIcon: false,
               onBackPressed: () {

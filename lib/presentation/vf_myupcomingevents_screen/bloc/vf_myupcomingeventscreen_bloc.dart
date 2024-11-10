@@ -39,6 +39,7 @@ class VfMyupcomingeventscreenBloc
         ));
       } else {
         emit(state.copyWith(
+          isLoading: false,
           errorMessage: 'No upcoming events found.',
         ));
       }

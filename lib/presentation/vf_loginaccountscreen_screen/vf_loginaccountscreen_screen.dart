@@ -38,6 +38,24 @@ class VfLoginaccountscreenScreen extends StatelessWidget {
             if (state is NoHomeOrg) {
               NavigatorService.pushNamed(AppRoutes.vfJoinasscreenScreen);
             } else if (state is LoginUserWithHomeOrg) {
+              LoginUserWithHomeOrg state =
+                  context.read<UserBloc>().state as LoginUserWithHomeOrg;
+
+              String? userId = state.userId;
+              String? role = state.user.role;
+              String homeOrg = state.user.userHomeOrg?.parentorg ?? '';
+
+              print("setting up FCM");
+              if (userId != null && role != null && homeOrg != null) {
+                setupFCM(
+                  userId,
+                  role,
+                  homeOrg,
+                );
+              } else {
+                // Handle the case where one of the values is null
+              }
+
               NavigatorService.pushNamed(AppRoutes.vfHomescreenContainerScreen);
             } else if (state is LoginFail) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -206,8 +224,8 @@ class VfLoginaccountscreenScreen extends StatelessWidget {
             print('userid: $userId');
 
             if (userId != null) {
+              // Change to Login State
               context.read<UserBloc>().add(LoginUserEvent(userId: userId));
-              setupFCM(userId);
             } else {
               print("Failed to retrieve User ID");
             }
@@ -292,11 +310,19 @@ class VfLoginaccountscreenScreen extends StatelessWidget {
   }
 
   /// Set up Firebase Cloud Messaging
-  Future<void> setupFCM(String userId) async {
-    FirebaseMessaging.instance.getToken().then((token) {
-      // Send token to your backend on first registration
-      FirebaseMessaging.instance.subscribeToTopic("events");
+  Future<void> setupFCM(String userId, String role, String homeOrg) async {
+    String parentOrg = homeOrg;
+    String modifiedOrg = parentOrg.replaceAll(RegExp(r'\s+'), '_');
+    print("modifiedOrg: $modifiedOrg");
+    print("role: $role");
 
+// Subscribe to the topic
+    final messaging = FirebaseMessaging.instance;
+    messaging.subscribeToTopic(modifiedOrg);
+
+    // subscribeToTopic("mohit");
+
+    messaging.getToken().then((token) {
       registerToken(userId, token);
     });
 
@@ -304,26 +330,38 @@ class VfLoginaccountscreenScreen extends StatelessWidget {
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
       // Send the new token to your backend
       registerToken(userId, newToken);
-      FirebaseMessaging.instance.subscribeToTopic("events");
+      // FirebaseMessaging.instance.subscribeToTopic("events");
     });
   }
 
   /// Register the token to the backend
   void registerToken(String userId, String? token) {
     if (token != null) {
+      print("Registering token: $token");
       // Call the method in your service to send the token to the backend
       VolufriendCrudService()
           .sendFcmToken(userId: userId, token: token)
           .then((result) {
         // Optionally handle the result
-        if (result == 1) {
+        if (result == 200) {
           print("Token registered successfully.");
         } else {
-          print("Failed to register token.");
+          print("Failed to register token. " + result.toString());
         }
       }).catchError((error) {
         print("Error registering token: $error");
       });
+    }
+  }
+
+  Future<void> subscribeToTopic(String topic) async {
+    try {
+      await FirebaseMessaging.instance.subscribeToTopic(topic);
+      String msg = "Subscribed to $topic";
+      print(msg);
+    } catch (e) {
+      String msg = "Subscribe failed: $e";
+      print(msg);
     }
   }
 }

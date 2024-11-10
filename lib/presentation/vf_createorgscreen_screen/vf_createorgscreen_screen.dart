@@ -108,7 +108,7 @@ class VfCreateorgscreenScreen extends StatelessWidget {
 
   Widget _buildSchoolLabel(BuildContext context) {
     return Text(
-      "Northshore School District",
+      "Green Lakes School District",
       style: TextStyle(fontSize: 16, color: Colors.black),
     );
   }

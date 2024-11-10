@@ -22,6 +22,7 @@ import 'package:volufriend/presentation/vf_createeventscreen1_eventdetails_scree
 import 'package:volufriend/presentation/vf_createeventscreen3_eventadditionaldetails_screen/bloc/vf_createeventscreen3_eventadditionaldetails_bloc.dart';
 import 'package:volufriend/presentation/vf_eventlist_screen/bloc/vf_eventlist_bloc.dart';
 import '/core/utils/cause_cache_service.dart'; // Adjust path as needed
+import 'navigation_helper.dart';
 
 class VfHomescreenPage extends StatelessWidget {
   const VfHomescreenPage({Key? key}) : super(key: key);
@@ -182,6 +183,7 @@ class VfHomescreenPage extends StatelessWidget {
                   event: todayEvent,
                   userRole: userRole,
                   onButtonPressed: () {
+                    NavigationHelper.endNavigation();
                     // Custom behavior you want to define when the button is pressed
                     context
                         .read<orgVoluEventBloc>()
@@ -302,21 +304,32 @@ class VfHomescreenPage extends StatelessWidget {
 
   void _handleVolunteerActionStateChanges(
       BuildContext context, orgVoluEventState state) {
-    // Check if the current state is the initial state and exit if so
-    if (state == orgVoluEventState.initial) return;
+    print('I enetered in _handleVolunteerActionStateChanges');
+    print('state is $state');
+    print(NavigationHelper.isNavigating);
+    if (state == orgVoluEventState.initial || NavigationHelper.isNavigating)
+      return;
+    print('about to navigate');
+    NavigationHelper.startNavigation();
 
     if (state.scheduledEvents) {
-      NavigatorService.pushNamed(AppRoutes.vfMyupcomingeventscreenScreen);
+      NavigatorService.pushNamed(AppRoutes.vfMyupcomingeventscreenScreen)
+          .then((_) => NavigationHelper.endNavigation());
     } else if (state.volunteerProfile) {
       NavigatorService.pushNamed(
-          AppRoutes.vfViewvolunteeringprofilescreenScreen);
+              AppRoutes.vfViewvolunteeringprofilescreenScreen)
+          .then((_) => NavigationHelper.endNavigation());
     } else if (state.attendanceReport) {
-      NavigatorService.pushNamed(AppRoutes.vfuserattendancereportpageScreen);
+      NavigatorService.pushNamed(AppRoutes.vfuserattendancereportpageScreen)
+          .then((_) => NavigationHelper.endNavigation());
     }
   }
 
   void _handleActionButtonPressed(
       BuildContext context, ActionbuttonsItemModel model) {
+    // Reset the navigation flag when any button is clicked
+    NavigationHelper.endNavigation();
+
     if (model.text == 'New opportunities') {
       context.read<orgVoluEventBloc>().add(findNewOpportunitiesEvent());
     } else if (model.text == 'View report') {
@@ -341,7 +354,10 @@ class VfHomescreenPage extends StatelessWidget {
             'Listening to orgVoluEventBloc state change from home screen _buildVolunteerIntrestedEvents');
         if (state.eventsignup) {
           print('Navigating to vfEventsignupscreenScreen');
-          NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen);
+
+          NavigationHelper.startNavigation();
+          NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen)
+              .then((_) => NavigationHelper.endNavigation());
         }
       },
       child:
@@ -376,24 +392,30 @@ class VfHomescreenPage extends StatelessWidget {
   }
 
   void _handleEventTapped(
-      BuildContext context, UpcomingeventslistItemModel model, String Role) {
-    context.read<orgVoluEventBloc>().add(resetEvent());
+      BuildContext context, UpcomingeventslistItemModel model, String role) {
+    if (NavigationHelper.isNavigating) return;
+    NavigationHelper.endNavigation();
 
+    context.read<orgVoluEventBloc>().add(resetEvent());
     context
         .read<VfHomescreenBloc>()
         .add(UpcomingEventTappedEvent(eventId: model.id!));
+
     final upcomingEventsList =
         BlocProvider.of<VfHomescreenBloc>(context).state.upcomingEventsList;
+    final selectedEvent = upcomingEventsList?.firstWhere(
+        (element) => element.eventId == model.id,
+        orElse: () => Voluevents(eventId: ''));
 
-    final selectedEvent = upcomingEventsList != null
-        ? upcomingEventsList
-            .firstWhere((element) => element.eventId == model.id)
-        : null;
-    if (Role == "Volunteer") {
+    if (role == "Volunteer" &&
+        selectedEvent != null &&
+        selectedEvent.eventId.isNotEmpty) {
       context
           .read<orgVoluEventBloc>()
-          .add(UpdateEvent(model.id!, selectedEvent!));
-      NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen);
+          .add(UpdateEvent(model.id!, selectedEvent));
+      NavigationHelper.startNavigation();
+      NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen)
+          .then((_) => NavigationHelper.endNavigation());
     }
   }
 
@@ -458,6 +480,111 @@ class VfHomescreenPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildActionButtonsForOrgProfile(BuildContext context) {
+    return SizedBox(
+      height: 100.h,
+      width: 356.h,
+      child: BlocListener<orgVoluEventBloc, orgVoluEventState>(
+        listener: _onOrgVoluEventStateChange,
+        child: BlocSelector<VfHomescreenBloc, VfHomescreenState,
+            VfHomescreenModel?>(
+          selector: (state) => state.vfHomescreenModelObj,
+          builder: (context, vfHomescreenModelObj) {
+            return vfHomescreenModelObj?.actionbuttonsItemList.isNotEmpty ??
+                    false
+                ? _buildActionButtonsList(
+                    vfHomescreenModelObj!.actionbuttonsItemList, context)
+                : Center(child: Text('No action buttons available'));
+          },
+        ),
+      ),
+    );
+  }
+
+  void _onOrgVoluEventStateChange(
+      BuildContext context, orgVoluEventState state) {
+    if (NavigationHelper.isNavigating) return; // Prevent multiple navigations
+
+    if (state.isLoading) {
+      NavigationHelper.startNavigation();
+      resetEventInitializationFlags(context);
+      _navigateToCreateEventScreen(context);
+    } else if (state.orgschedule) {
+      NavigationHelper.startNavigation();
+      _navigateToScheduleScreen(context);
+    } else if (state.approvehours) {
+      NavigationHelper.startNavigation();
+      _navigateToApproveHoursScreen(context);
+    } else if (state.manageEvents) {
+      NavigationHelper.startNavigation();
+      _navigateToManageEventsScreen(context);
+    }
+  }
+
+  void _navigateToCreateEventScreen(BuildContext context) {
+    print('Navigating to VfCreateeventscreen1EventdetailsScreen for create');
+    NavigatorService.pushNamed(AppRoutes.vfCreateeventscreen1EventdetailsScreen)
+        .then((_) => NavigationHelper.endNavigation()); // Reset the flag
+  }
+
+  void _navigateToScheduleScreen(BuildContext context) {
+    print('Navigating to vfOrgschedulescreenScreen');
+    NavigatorService.pushNamed(AppRoutes.vfOrgschedulescreenScreen)
+        .then((_) => NavigationHelper.endNavigation()); // Reset the flag
+  }
+
+  void _navigateToApproveHoursScreen(BuildContext context) {
+    print('Navigating to vfApprovehoursscreenScreen');
+    NavigatorService.pushNamed(AppRoutes.vfEventListScreen)
+        .then((_) => NavigationHelper.endNavigation()); // Reset the flag
+  }
+
+  void _navigateToManageEventsScreen(BuildContext context) {
+    print('Navigating to vfEventsearchScreen');
+    NavigatorService.pushNamed(AppRoutes.vfEventsearchScreen)
+        .then((_) => NavigationHelper.endNavigation()); // Reset the flag
+  }
+
+  Widget _buildActionButtonsList(
+      List<ActionbuttonsItemModel> actionButtons, BuildContext context) {
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(horizontal: 20.h),
+      scrollDirection: Axis.horizontal,
+      separatorBuilder: (context, index) => SizedBox(width: 42.h),
+      itemCount: actionButtons.length,
+      itemBuilder: (context, index) {
+        final model = actionButtons[index];
+        return ActionbuttonsItemWidget(model,
+            onPressed: () => _onActionButtonPressed(model, context));
+      },
+    );
+  }
+
+  void _onActionButtonPressed(
+      ActionbuttonsItemModel model, BuildContext context) {
+    NavigationHelper.endNavigation();
+
+    context.read<orgVoluEventBloc>().add(resetEvent());
+    print('Tapped on: ${model.text}');
+    switch (model.text) {
+      case 'Create Event':
+        context.read<orgVoluEventBloc>().add(CreateEvent());
+        break;
+      case 'Approve Hours':
+        context
+            .read<orgVoluEventBloc>()
+            .add(approvehoursEvent("j", "j", "j", Voluevents(eventId: '')));
+        context.read<EventListBloc>().add(ResetEventListScreenEvent());
+        break;
+      case 'Manage Events':
+        context.read<orgVoluEventBloc>().add(manageEventsEvent());
+        context.read<EventListBloc>().add(ResetEventListScreenEvent());
+        break;
+      default:
+        print('No action defined for ${model.text}');
+    }
   }
 
   /// BoxDecoration for the container
@@ -554,33 +681,35 @@ class VfHomescreenPage extends StatelessWidget {
 
   void _handleOrgEventStateChange(
       BuildContext context, orgVoluEventState state) {
-    // Local flag to track if navigation has occurred
-    bool _hasNavigated = false;
+    // Check navigation flag to prevent multiple navigations
+    if (NavigationHelper.isNavigating) return;
 
     print('Listening to orgVoluEventBloc state change from home screen');
 
-    if (state == orgVoluEventState.initial || _hasNavigated) {
-      return; // Prevent navigation if state is initial or navigation has already occurred
+    if (state == orgVoluEventState.initial) {
+      return; // Prevent navigation if state is initial
     }
 
     if (state.eventsignup) {
-      _hasNavigated = true;
-      NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen)
-          .then((_) => _hasNavigated = false); // Reset flag after returning
+      NavigationHelper.startNavigation();
+      NavigatorService.pushNamed(AppRoutes.vfEventsignupscreenScreen).then(
+          (_) =>
+              NavigationHelper.endNavigation()); // Reset flag after returning
     } else if (state.eventDetails &&
         state.eventId != null &&
         state.eventId.isNotEmpty &&
         !state.showallorgevents) {
       print('Navigating to vfEventdetailspageScreen');
-      _hasNavigated = true;
-      NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen)
-          .then((_) => _hasNavigated = false); // Reset flag after returning
+      NavigationHelper.startNavigation();
+      NavigatorService.pushNamed(AppRoutes.vfEventdetailspageScreen).then((_) =>
+          NavigationHelper.endNavigation()); // Reset flag after returning
     } else if (state.updateEvent) {
       resetEventInitializationFlags(context);
-      _hasNavigated = true;
+      NavigationHelper.startNavigation();
       NavigatorService.pushNamed(
               AppRoutes.vfCreateeventscreen1EventdetailsScreen)
-          .then((_) => _hasNavigated = false); // Reset flag after returning
+          .then((_) =>
+              NavigationHelper.endNavigation()); // Reset flag after returning
     }
   }
 
@@ -614,6 +743,10 @@ class VfHomescreenPage extends StatelessWidget {
   /// Handles the tap on an event item
   void _handleOrgEventTap(
       BuildContext context, UpcomingeventslistItemModel model) {
+    if (NavigationHelper.isNavigating) return; // Prevent multiple navigations
+
+    NavigationHelper.endNavigation();
+
     context.read<orgVoluEventBloc>().add(resetEvent());
 
     final upcomingEventsList =
@@ -627,6 +760,8 @@ class VfHomescreenPage extends StatelessWidget {
           .read<orgVoluEventBloc>()
           .add(eventdetailsEvent(model.id!, selectedEvent));
     }
+
+    // End navigation after handling the tap
   }
 
   /// Handles the long press on an event item
@@ -729,99 +864,5 @@ class VfHomescreenPage extends StatelessWidget {
         .add(VfCreateeventscreen2ShiftsResetInitializationEvent());
     BlocProvider.of<VfCreateeventscreen3EventadditionaldetailsBloc>(context).add(
         VfCreateeventscreen3EventadditionaldetailsResetInitializationEvent());
-  }
-
-  Widget _buildActionButtonsForOrgProfile(BuildContext context) {
-    return SizedBox(
-      height: 100.h,
-      width: 356.h,
-      child: BlocListener<orgVoluEventBloc, orgVoluEventState>(
-        listener: _onOrgVoluEventStateChange,
-        child: BlocSelector<VfHomescreenBloc, VfHomescreenState,
-            VfHomescreenModel?>(
-          selector: (state) => state.vfHomescreenModelObj,
-          builder: (context, vfHomescreenModelObj) {
-            return vfHomescreenModelObj?.actionbuttonsItemList.isNotEmpty ??
-                    false
-                ? _buildActionButtonsList(
-                    vfHomescreenModelObj!.actionbuttonsItemList, context)
-                : Center(child: Text('No action buttons available'));
-          },
-        ),
-      ),
-    );
-  }
-
-  void _onOrgVoluEventStateChange(
-      BuildContext context, orgVoluEventState state) {
-    if (state.isLoading) {
-      resetEventInitializationFlags(context);
-      _navigateToCreateEventScreen(context);
-    } else if (state.orgschedule) {
-      _navigateToScheduleScreen(context);
-    } else if (state.approvehours) {
-      _navigateToApproveHoursScreen(context);
-    } else if (state.manageEvents) {
-      _navigateToManageEventsScreen(context);
-    }
-  }
-
-  void _navigateToCreateEventScreen(BuildContext context) {
-    print('Navigating to VfCreateeventscreen1EventdetailsScreen for create');
-    NavigatorService.pushNamed(
-        AppRoutes.vfCreateeventscreen1EventdetailsScreen);
-  }
-
-  void _navigateToScheduleScreen(BuildContext context) {
-    print('Navigating to vfOrgschedulescreenScreen');
-    NavigatorService.pushNamed(AppRoutes.vfOrgschedulescreenScreen);
-  }
-
-  void _navigateToApproveHoursScreen(BuildContext context) {
-    print('Navigating to vfApprovehoursscreenScreen');
-    NavigatorService.pushNamed(AppRoutes.vfEventListScreen);
-  }
-
-  void _navigateToManageEventsScreen(BuildContext context) {
-    print('Navigating to vfEventsearchScreen');
-    NavigatorService.pushNamed(AppRoutes.vfEventsearchScreen);
-  }
-
-  Widget _buildActionButtonsList(
-      List<ActionbuttonsItemModel> actionButtons, BuildContext context) {
-    return ListView.separated(
-      padding: EdgeInsets.symmetric(horizontal: 20.h),
-      scrollDirection: Axis.horizontal,
-      separatorBuilder: (context, index) => SizedBox(width: 42.h),
-      itemCount: actionButtons.length,
-      itemBuilder: (context, index) {
-        final model = actionButtons[index];
-        return ActionbuttonsItemWidget(model,
-            onPressed: () => _onActionButtonPressed(model, context));
-      },
-    );
-  }
-
-  void _onActionButtonPressed(
-      ActionbuttonsItemModel model, BuildContext context) {
-    context.read<orgVoluEventBloc>().add(resetEvent());
-    print('Tapped on: ${model.text}');
-    switch (model.text) {
-      case 'Create Event':
-        context.read<orgVoluEventBloc>().add(CreateEvent());
-        break;
-      case 'Approve Hours':
-        context
-            .read<orgVoluEventBloc>()
-            .add(approvehoursEvent("j", "j", "j", Voluevents(eventId: '')));
-        context.read<EventListBloc>().add(ResetEventListScreenEvent());
-        break;
-      case 'Manage Events':
-        context.read<orgVoluEventBloc>().add(manageEventsEvent());
-        context.read<EventListBloc>().add(ResetEventListScreenEvent());
-        break;
-      default:
-        print('No action defined for ${model.text}');
-    }
   }
 }

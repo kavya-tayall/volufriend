@@ -89,6 +89,7 @@ class Voluevents extends Equatable {
     int? totalEventCheckins;
     String parentOrg;
     List<String>? imageUrls;
+    DateTime? regByDate;
 
     try {
       imageUrls = json['event']?['image_urls'] != null
@@ -283,6 +284,14 @@ class Voluevents extends Equatable {
       print('Error parsing parent_org: $e');
       parentOrg = ''; // Provide a default value in case of an error
     }
+
+    try {
+      regByDate = json['event']?['reg_by_date'] != null
+          ? DateTime.tryParse(json['event']?['reg_by_date'] as String ?? '')
+          : null;
+    } catch (e) {
+      print('Error parsing reg_by_date: $e');
+    }
     // Return the Voluevents object with any successfully parsed values
     return Voluevents(
       eventId: eventId,
@@ -312,6 +321,7 @@ class Voluevents extends Equatable {
       totalEventCheckins: totalEventCheckins,
       parentOrg: parentOrg,
       imageUrls: imageUrls,
+      regByDate: regByDate,
     );
   }
 
@@ -346,6 +356,7 @@ class Voluevents extends Equatable {
       'total_checkins': totalEventCheckins,
       'parent_org': parentOrg,
       'image_urls': imageUrls ?? [], // Defaults to an empty list if null
+      'reg_by_date': regByDate?.toIso8601String(),
     };
   }
 

@@ -63,7 +63,6 @@ class VolufriendCrudService {
   Future<UserHomeOrg> getloginUserHomeOrg(String userId) async {
     final response = await VoluFriendDioClient.instance
         .get('${Paths.userhomeorgUrl}/$userId');
-    print(response);
     // Return the parsed UserHomeOrg object
     return UserHomeOrg.fromJson(response);
   }

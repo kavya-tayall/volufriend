@@ -155,6 +155,8 @@ class VfCreateeventscreen1EventdetailsBloc extends Bloc<
                 ? DateFormat('MM/dd/yyyy').format(orgEvent!.regByDate!)
                 : '',
           );
+          print('registraion deadline: ' +
+              registrationDeadlineInputController.text);
 
           // Convert Causes to SelectionPopupModel
           SelectionPopupModel convertCauseToSelectionPopupModel(causes cause) {

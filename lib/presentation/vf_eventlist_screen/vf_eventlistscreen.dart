@@ -13,6 +13,7 @@ import 'package:volufriend/presentation/vf_createeventscreen2_eventshifts_screen
 import 'package:volufriend/presentation/vf_createeventscreen1_eventdetails_screen/bloc/vf_createeventscreen1_eventdetails_bloc.dart';
 import 'package:volufriend/presentation/vf_createeventscreen3_eventadditionaldetails_screen/bloc/vf_createeventscreen3_eventadditionaldetails_bloc.dart';
 import '/core/utils/cause_cache_service.dart'; // Adjust path as needed
+import '../../presentation/vf_homescreen_page/navigation_helper.dart';
 
 class VfEventListScreen extends StatelessWidget {
   const VfEventListScreen({Key? key}) : super(key: key);
@@ -292,7 +293,8 @@ class VfEventListScreen extends StatelessWidget {
   }
 
   void _handleListOnTap(BuildContext context, String eventId, String userRole) {
-    print('Event ID: ${eventId}');
+    NavigationHelper.endNavigation;
+    print('Event ID in tap: ${eventId}');
 
     // Trigger the event signup or event details action
     final orgEventBloc = BlocProvider.of<orgVoluEventBloc>(context);
@@ -354,9 +356,20 @@ class VfEventListScreen extends StatelessWidget {
           .read<orgVoluEventBloc>()
           .add(eventdetailsEvent(eventId, selectedEvent!));
     } else if (prevstate == 'eventDetails') {
+      print('eventDetails');
       context
           .read<orgVoluEventBloc>()
           .add(eventdetailsEvent(eventId, selectedEvent!));
+    } else if (prevstate == '') {
+      context.read<orgVoluEventBloc>().add(resetEvent());
+      NavigationHelper.endNavigation();
+      if (userRole == 'Volunteer') {
+        context.read<orgVoluEventBloc>().add(eventsignupEvent(eventId));
+      } else {
+        context
+            .read<orgVoluEventBloc>()
+            .add(eventdetailsEvent(eventId, selectedEvent!));
+      }
     }
   }
 
